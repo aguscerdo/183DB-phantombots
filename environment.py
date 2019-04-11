@@ -150,7 +150,47 @@ class Environment:
 			else:
 				print("illegal")
 		return valid_move
+
+	def legal_move_all_pursuers(self, pursuer_moves):
+		"""
+		Takes in moves of all pursuers and returns True if no collisions AND legal
+		"""
+		pass
 	
+	def collision_pursuers(self, pursuer_moves):
+		"""
+		Returns True if there is a collision in their moves, false otherwise
+		:param pursuer_moves: list of all pursuer moves, [[xi, yi]]
+		"""
+		### check if endpoints collide
+		collision = False
+		hashs = []
+		sz = self.size[0] * self.size[1]
+		for i in range(len(pursuer_moves)):
+			x,y = pursuer_moves[i]
+			hashs.append(x+y*sz)
+		# check dupes in hashs
+		for i in range(len(hashs)):
+			for j in range(i):
+				collision |= (hashs[i] == hashs[j])
+		### check if paths cross
+		for i in range(len(hashs)):
+			bot_posx, bot_posy = self.bots[i].get_position()
+			bot_hash = bot_posx+bot_posy*sz
+			# TODO no stay still? 
+			collision &= (bot_hash not in hashs)
+			
+		return collision
+
+	def collision_pacman(self, pursuer_moves, pacman_move):
+		"""
+		Returns True if there is a collision between pacman and pursuers
+		Pacman should aim for False, pursuers aim for True.
+		:param pursuer_moves: list of all pursuer moves, [[xi, yi]]
+		:param pacman_move: pacman's move, [xi, yi]
+		"""
+
+
 	def move(self, bot, end_pos):
 		"""
 		Moves bot to location
@@ -170,6 +210,20 @@ class Environment:
 		# TODO: manipulate state if necessary
 		return state
 
+	def get_state_channels(self):
+		"""
+		Returns state as channels
+		"""
+		state = [self.verticeMatrix]
+		for bot in self.bots:
+			bot_state = np.zeros(self.size)
+			bot_posx, bot_posy = bot.get_position()
+			bot_state[bot_posx, bot_posy] = 1
+			#TODO: add more to state? 
+			state.append[bot_state]
+		return state
+		
+
 	def adjacent(self, pos):
 		"""
 		Returns all adjacent spots to pos
@@ -180,7 +234,24 @@ class Environment:
 		adj = [ [x+1, y], [x-1, y], [x, y+1], [x, y-1] ]
 		return adj
 
-		
+	def play_round(self, pursuer_moves, pacman_move):
+		"""
+		Plays one round, moving pursuers and pacman, if possible.
+		Returns True if succesful, false if invalid
+		:param pursuer_moves: list of moves for each pursure, [[xi,yi]]
+		:param pacman_move: move for pacman [x, y]
+		:return: boolean
+		"""	
+		legal = self.legal_move_bot(-1, pacman_move)
+		for i in range(len(self.bots)-1):
+			legal &= self.legal_move_bot(i, pursuer_moves[i])
+		if not legal:
+			return False
+		#it is legal, so now we can move
+		self.move(-1, pacman_move)
+		for i in range(len(self.bots)-1):
+			self.move(i, pursuer_moves[i])
+		return True
 
 	def win_condition(self):
 		"""
