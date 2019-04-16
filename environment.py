@@ -6,8 +6,12 @@
 #	bots is a list of PhantomBots in our simulation
 
 import matplotlib.pyplot as plt
+from matplotlib.animation import FuncAnimation
 import numpy as np
 from phantomBot import PhantomBot
+
+
+
 # TODO: change these later
 presetSize = [10, 10]
 presetVertices = []
@@ -67,11 +71,11 @@ class Environment:
 		if (self.printAll):
 			print("Loaded new grid, size is " + str(self.size))
 
-	def plot_grid(self):
+	def plot_grid(self, ax=None):
 		"""
 		Plots the edges by plotting a line for each edge
 		"""
-		ax = plt.gca()
+		ax = plt.gca() if ax is None else ax
 		if (self.printAll):
 			print("Plotting Grid!")
 		for i in range(self.size[0]):
@@ -102,7 +106,7 @@ class Environment:
 		# x from -0.5 -> size_x - 0.5, y from -0.5 -> size_y - 0.5
 		# -0.5 to show full grid
 		plt.axis([-0.5, self.size[0]-0.5, -0.5, self.size[1]-0.5])
-		plt.show()
+		# plt.show()
 
 	def legal_move_bot(self, bot, end_pos):
 		"""
@@ -283,6 +287,34 @@ class Environment:
 		"""
 		return np.abs(a[0] - b[0]) + np.abs(a[1] - b[1])
 
-env = Environment()
-env.plot_grid()
 
+	def animate(self):
+		history = [[[np.cos(i), np.cos(i)], [np.sin(i), np.cos(i)], [np.cos(i), np.sin(i)]] for i in np.linspace(0, 20, 50)]
+		history = np.asarray(history)
+		
+		
+		# Format: list containing tuples (or lists) of coordinates, where idx 0 is target, idx 1.. are hunters
+		# self.plot_grid()
+		
+		fig = plt.figure()
+		ax = fig.add_axes([0, 0, 1, 1])
+		self.plot_grid(ax)
+		# ax.set_xlim(0, self.size)
+		# ax.set_ylim(0, self.size)
+
+		scatT = ax.scatter(history[0, 0, 0], history[0, 0, 1], c='r')
+		scatP = ax.scatter(history[0, 1:, 0], history[0, 1:, 1], c='b')
+		
+		def update(i):
+			h = history[i]
+			scatT.set_offsets(h[0])
+			scatP.set_offsets(h[1:])
+		
+		
+		anim = FuncAnimation(fig, update, frames=len(history), interval=50)
+		anim.save('the_movie.mp4', writer='ffmpeg')
+	
+		
+env = Environment()
+# env.plot_grid()
+env.animate()
