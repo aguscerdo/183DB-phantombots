@@ -4,7 +4,12 @@
 # 	a vertice is defined by its x and y coordinate ([x, y])
 #	We assume that all adjacent vertices connected if they are in the grid
 #	bots is a list of PhantomBots in our simulation
-
+"""
+how to make something move:
+use play_round. If it returns false, then your moves were illegal and nothing worked.
+If there is supposed to be a double_move for pacman, input it in play_round. 
+Examples on how to move are below (first_motion, psuedo_rand_motion)
+"""
 import matplotlib.pyplot as plt
 from matplotlib.animation import FuncAnimation
 import numpy as np
