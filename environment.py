@@ -119,7 +119,7 @@ class Environment:
 		valid_move &= (self.verticeMatrix[start_pos[0], start_pos[1]] == 1)
 		# check collisions, TODO maybe change this(?)
 		for i in range(len(self.bots)):
-			valid_move &= (dist(end_pos, self.bots[i].get_position()) > 0)
+			valid_move &= (self.dist(end_pos, self.bots[i].get_position()) > 0)
 		if (self.printAll):
 			print("Moving from " + str(start_pos) + " to " + str(end_pos) + " is: ")
 			if (valid_move):
@@ -142,7 +142,7 @@ class Environment:
 		valid_move &= (self.verticeMatrix[start_pos[0], start_pos[1]] == 1)
 		# check collisions, TODO maybe change this(?)
 		for i in range(len(self.bots)):
-			valid_move &= (dist(end_pos, self.bots[i].get_position()) > 0)
+			valid_move &= (self.dist(end_pos, self.bots[i].get_position()) > 0)
 		if (self.printAll):
 			print("Moving from " + str(start_pos) + " to " + str(end_pos) + " is: ")
 			if (valid_move):
