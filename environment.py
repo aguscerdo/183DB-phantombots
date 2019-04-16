@@ -189,6 +189,7 @@ class Environment:
 		:param pursuer_moves: list of all pursuer moves, [[xi, yi]]
 		:param pacman_move: pacman's move, [xi, yi]
 		"""
+		pass
 
 
 	def move(self, bot, end_pos):
@@ -234,14 +235,18 @@ class Environment:
 		adj = [ [x+1, y], [x-1, y], [x, y+1], [x, y-1] ]
 		return adj
 
-	def play_round(self, pursuer_moves, pacman_move):
+	def play_round(self, pursuer_moves, pacman_move, pacman_second_move=None):
 		"""
 		Plays one round, moving pursuers and pacman, if possible.
 		Returns True if succesful, false if invalid
 		:param pursuer_moves: list of moves for each pursure, [[xi,yi]]
 		:param pacman_move: move for pacman [x, y]
+		:param pacman_second_move: second move for pacman (if it can move twice) [x, y]
 		:return: boolean
 		"""	
+		double_move = self.bots[-1].double_move()
+		if double_move and pacman_second_move is None:
+			return False # pacman should move twice here 
 		legal = self.legal_move_bot(-1, pacman_move)
 		for i in range(len(self.bots)-1):
 			legal &= self.legal_move_bot(i, pursuer_moves[i])
@@ -251,6 +256,9 @@ class Environment:
 		self.move(-1, pacman_move)
 		for i in range(len(self.bots)-1):
 			self.move(i, pursuer_moves[i])
+		#if pacman can move again, move again
+		if  double_move:
+			self.move(-1, pacman_second_move)
 		return True
 
 	def win_condition(self):
