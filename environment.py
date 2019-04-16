@@ -71,11 +71,17 @@ class Environment:
 		if (self.printAll):
 			print("Loaded new grid, size is " + str(self.size))
 
-	def plot_grid(self, ax=None):
+	def plot_grid(self, ax=None, plot_points=True):
 		"""
 		Plots the edges by plotting a line for each edge
 		"""
 		ax = plt.gca() if ax is None else ax
+		ax.set_aspect('equal')
+		ax.grid(True, 'both')
+		ax.set_xticks(np.arange(0, self.size[0]))
+		ax.set_yticks(np.arange(0, self.size[1]))
+
+		
 		if (self.printAll):
 			print("Plotting Grid!")
 		for i in range(self.size[0]):
@@ -95,12 +101,13 @@ class Environment:
 					ax.plot(xs, ys, 'r')
 		#plot bots:
 		radius = 0.1
-		for bot in self.bots:
-			if bot.is_pacman():
-				circle = plt.Circle(bot.get_position(), radius, color='yellow')
-			else:
-				circle = plt.Circle(bot.get_position(), radius, color='blue')
-			ax.add_artist(circle)
+		if plot_points:
+			for bot in self.bots:
+				if bot.is_pacman():
+					circle = plt.Circle(bot.get_position(), radius, color='yellow')
+				else:
+					circle = plt.Circle(bot.get_position(), radius, color='blue')
+				ax.add_artist(circle)
 
 		plt.title('The Maze')
 		# x from -0.5 -> size_x - 0.5, y from -0.5 -> size_y - 0.5
@@ -280,7 +287,7 @@ class Environment:
 
 	def dist(self, a, b):
 		"""
-		Gets railroad/manhatten/L1 distance
+		Gets railroad/manhattan/L1 distance
 		:param a: (x0, y0)
 		:param b: (x1, y1)
 		:return: L1 d(a,b)
@@ -289,7 +296,7 @@ class Environment:
 
 
 	def animate(self):
-		history = [[[np.cos(i), np.cos(i)], [np.sin(i), np.cos(i)], [np.cos(i), np.sin(i)]] for i in np.linspace(0, 20, 50)]
+		history = [[[np.cos(i), np.cos(i)], [np.sin(i), np.cos(i)], [np.cos(i), np.sin(i)]] for i in np.linspace(0, 20, 10)]
 		history = np.asarray(history)
 		
 		
@@ -298,20 +305,20 @@ class Environment:
 		
 		fig = plt.figure()
 		ax = fig.add_axes([0, 0, 1, 1])
-		self.plot_grid(ax)
+		self.plot_grid(ax, plot_points=False)
 		# ax.set_xlim(0, self.size)
 		# ax.set_ylim(0, self.size)
 
-		scatT = ax.scatter(history[0, 0, 0], history[0, 0, 1], c='r')
-		scatP = ax.scatter(history[0, 1:, 0], history[0, 1:, 1], c='b')
+		scatT = ax.scatter(history[0, -1, 0], history[0, -1, 1], c='r')
+		scatP = ax.scatter(history[0, :-1, 0], history[0, :-1, 1], c='b')
 		
 		def update(i):
 			h = history[i]
-			scatT.set_offsets(h[0])
-			scatP.set_offsets(h[1:])
+			scatT.set_offsets(h[-1])
+			scatP.set_offsets(h[:-1])
 		
 		
-		anim = FuncAnimation(fig, update, frames=len(history), interval=50)
+		anim = FuncAnimation(fig, update, frames=len(history), interval=10)
 		anim.save('the_movie.mp4', writer='ffmpeg')
 	
 		
