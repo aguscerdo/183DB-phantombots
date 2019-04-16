@@ -78,6 +78,8 @@ class Environment:
 		"""
 		Plots the edges by plotting a line for each edge
 		"""
+		bot_positions = [bot.get_position() for bot in self.bots]
+		print("bot positions: " + str(bot_positions))
 		ax = plt.gca() if ax is None else ax
 		ax.set_aspect('equal')
 		ax.grid(True, 'both')
@@ -116,7 +118,7 @@ class Environment:
 		# x from -0.5 -> size_x - 0.5, y from -0.5 -> size_y - 0.5
 		# -0.5 to show full grid
 		plt.axis([-0.5, self.size[0]-0.5, -0.5, self.size[1]-0.5])
-		# plt.show()
+		plt.show()
 
 	def legal_move_bot(self, bot, end_pos):
 		"""
@@ -129,6 +131,13 @@ class Environment:
 		# True if dist == 1 and both vertices in set and no collision
 		valid_move = True
 		valid_move &= (self.dist(start_pos, end_pos) == 1)
+		#check if points are even valid
+		valid_move &= (end_pos[0] < self.size[0] and end_pos[1] < self.size[1])
+		valid_move &= (end_pos[0] >= 0 and end_pos[1] >= 0)
+		valid_move &= (start_pos[0] < self.size[0] and start_pos[1] < self.size[1])
+		valid_move &= (start_pos[0] >= 0 and start_pos[1] >= 0)
+		if valid_move == False:
+			return valid_move
 		valid_move &= (self.verticeMatrix[end_pos[0], end_pos[1]] == 1)
 		valid_move &= (self.verticeMatrix[start_pos[0], start_pos[1]] == 1)
 		# check collisions, TODO maybe change this(?)
@@ -169,7 +178,7 @@ class Environment:
 		"""
 		Takes in moves of all pursuers and returns True if no collisions AND legal
 		"""
-		legal = self.collision_pursuers(pursuer_moves)
+		legal = not self.collision_pursuers(pursuer_moves)
 		for i in range(len(self.bots)-1):
 			legal &= self.legal_move_bot(i, pursuer_moves[i])
 		return legal
@@ -179,6 +188,22 @@ class Environment:
 		Takes in move of pacman and returns whether this is legal or not
 		"""
 		return self.legal_move_bot(-1, pacman_move)
+
+	def legal_second_move_pacman(self, pacman_move, pacman_second_move):
+		"""
+		Takes in move and second move of pacman and returns whether this is legal or not
+		"""
+		start_pos = pacman_move
+		end_pos = pacman_second_move
+		valid_move = True
+		valid_move &= (self.dist(start_pos, end_pos) == 1)
+		valid_move &= (self.verticeMatrix[end_pos[0], end_pos[1]] == 1)
+		valid_move &= (self.verticeMatrix[start_pos[0], start_pos[1]] == 1)
+		# check collisions, TODO maybe change this(?)
+		for i in range(len(self.bots)-1):
+			valid_move &= (self.dist(end_pos, self.bots[i].get_position()) > 0)
+		return valid_move
+	
 
 	def collision_pursuers(self, pursuer_moves):
 		"""
@@ -202,7 +227,7 @@ class Environment:
 			bot_posx, bot_posy = self.bots[i].get_position()
 			bot_hash = bot_posx+bot_posy*sz
 			# TODO no stay still? 
-			collision &= (bot_hash not in hashs)
+			collision |= (bot_hash in hashs)
 			
 		return collision
 
@@ -230,7 +255,7 @@ class Environment:
 		pac_posx, pac_posy = self.bots[-1].get_position()
 		pac_hash = pac_posx+pac_posy*sz
 		# TODO no stay still? 
-		collision &= (pac_hash not in hashs)
+		collision |= (pac_hash in hashs)
 			
 		return collision
 
@@ -297,7 +322,7 @@ class Environment:
 		legal &= self.legal_move_pacman(pacman_move)
 		#check if doublemove legal
 		if double_move:
-			legal &= self.legal_move_pos(pacman_move, pacman_second_move)
+			legal &= self.legal_second_move_pacman(pacman_move, pacman_second_move)
 		if not legal:
 			return False
 		#it is legal, so now we can move
@@ -384,11 +409,47 @@ class Environment:
 				if self.play_round(pursuer_moves, pac_move, pacman_second_move):
 					# If it's true, we played a round, return
 					return True
+		print(":(")
 		return False
+	
+	def psuedo_rand_motion(self):
+		"""
+		Test, each bot does a random thing that is legal
+		"""
+		randmax = 1000
+		curr = 0
+		while curr < randmax:
+			curr = curr + 1
+			pursuer_moves = []
+			for i in range(len(self.bots)-1):
+				bot = self.bots[i]
+				bot_pos = bot.get_position()
+				adjacent = self.adjacent(bot_pos)
+				# TODO: random with prob p "not backward"
+				rand_num = np.random.randint(0, high=4)
+				bot_move = adjacent[rand_num]
+				pursuer_moves.append(bot_move)
+			pacman = self.bots[-1]
+			pacman_pos = pacman.get_position()
+			adjacent = self.adjacent(pacman_pos)
+			rand_num = np.random.randint(0, high=4)
+			pacman_move = adjacent[rand_num]
+			if pacman.double_move():
+				adjacent = self.adjacent(pacman_move)
+				rand_num = np.random.randint(0, high=4)
+				pacman_second_move = adjacent[rand_num]
+			else: 
+				pacman_second_move = None
+			if self.play_round(pursuer_moves, pacman_move, pacman_second_move):
+				return True # if we moved, then great!
+		print("err :( curr > randmax")
+		return False # we did not move
 		
 
 		
 env = Environment()
-env.first_motion()
 env.plot_grid()
+for i in range(5):
+	env.psuedo_rand_motion()
+	env.plot_grid()
 # env.animate()
