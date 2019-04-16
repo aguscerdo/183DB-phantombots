@@ -9,12 +9,23 @@ import matplotlib.pyplot as plt
 from matplotlib.animation import FuncAnimation
 import numpy as np
 from phantomBot import PhantomBot
+import csv
 
 
 
 # TODO: change these later
-presetSize = [10, 10]
+presetSize = [11, 11]
 presetVertices = []
+with open('map.csv') as csvfile:
+	readCSV = csv.reader(csvfile, delimiter=",")
+	for row in readCSV:
+		x_val = int(row[0])
+		y_val = int(row[1])
+		presetVertices.append([x_val,y_val])
+
+
+
+
 for i in range(presetSize[0]):
 	for j in range(presetSize[1]):
 		if (i !=j and (i != 6 or j > 5) and (j!=9 or i <2) ) or ((j == 6 or j == 2) and i == 6):
@@ -324,4 +335,5 @@ class Environment:
 		
 env = Environment()
 # env.plot_grid()
-env.animate()
+env.plot_grid()
+plt.show()
