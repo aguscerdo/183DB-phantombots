@@ -38,7 +38,7 @@ class PhantomBot:
 		:param pos: position to move to, (x,y)
 		"""
 		self.pos = pos
-		self.current_step = ( self.current_step + 1 ) % self.double_step
+		self.current_step = 3 if self.double_step == 0 else ( self.current_step + 1 ) % self.double_step
 
 	def get_position(self):
 		"""

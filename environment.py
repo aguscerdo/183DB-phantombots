@@ -9,7 +9,7 @@ import matplotlib.pyplot as plt
 from matplotlib.animation import FuncAnimation
 import numpy as np
 from phantomBot import PhantomBot
-
+import itertools
 
 
 # TODO: change these later
@@ -46,8 +46,11 @@ class Environment:
 		self.verticeMatrix = np.zeros(self.size)
 		self.set_vertice_matrix()
 		self.occupiedVertices = []
+		self.history = []
 		for bot in self.bots:
 			self.occupiedVertices.append(bot.get_position())
+			self.history.append(bot.get_position())
+		
 
 	def set_vertice_matrix(self):
 		"""
@@ -159,8 +162,17 @@ class Environment:
 		"""
 		Takes in moves of all pursuers and returns True if no collisions AND legal
 		"""
-		pass
+		legal = self.collision_pursuers(pursuer_moves)
+		for i in range(len(self.bots)-1):
+			legal &= self.legal_move_bot(i, pursuer_moves[i])
+		return legal
 	
+	def legal_move_pacman(self, pacman_move):
+		"""
+		Takes in move of pacman and returns whether this is legal or not
+		"""
+		return self.legal_move_bot(-1, pacman_move)
+
 	def collision_pursuers(self, pursuer_moves):
 		"""
 		Returns True if there is a collision in their moves, false otherwise
@@ -177,6 +189,7 @@ class Environment:
 		for i in range(len(hashs)):
 			for j in range(i):
 				collision |= (hashs[i] == hashs[j])
+
 		### check if paths cross
 		for i in range(len(hashs)):
 			bot_posx, bot_posy = self.bots[i].get_position()
@@ -193,7 +206,26 @@ class Environment:
 		:param pursuer_moves: list of all pursuer moves, [[xi, yi]]
 		:param pacman_move: pacman's move, [xi, yi]
 		"""
-		pass
+		### check if endpoints collide
+		collision = False
+		hashs = []
+		sz = self.size[0] * self.size[1]
+		for i in range(len(pursuer_moves)):
+			x,y = pursuer_moves[i]
+			hashs.append(x+y*sz)
+		# check if pacman hash in hashs
+		pacx, pacy = pacman_move
+		pac_hash = pacx+pacy*sz
+		for i in range(len(hashs)):
+			collision |= (hashs[i] == pac_hash)
+
+		### check if paths cross
+		pac_posx, pac_posy = self.bots[-1].get_position()
+		pac_hash = pac_posx+pac_posy*sz
+		# TODO no stay still? 
+		collision &= (pac_hash not in hashs)
+			
+		return collision
 
 
 	def move(self, bot, end_pos):
@@ -204,6 +236,7 @@ class Environment:
 		"""
 		self.bots[bot].move(end_pos)
 		self.occupiedVertices[bot] = end_pos
+		self.history[bot].append(end_pos)
 
 	def get_state(self):
 		"""
@@ -251,9 +284,13 @@ class Environment:
 		double_move = self.bots[-1].double_move()
 		if double_move and pacman_second_move is None:
 			return False # pacman should move twice here 
-		legal = self.legal_move_bot(-1, pacman_move)
-		for i in range(len(self.bots)-1):
-			legal &= self.legal_move_bot(i, pursuer_moves[i])
+
+		#check if moves legal
+		legal = self.legal_move_all_pursuers(pursuer_moves)
+		legal &= self.legal_move_pacman(pacman_move)
+		#check if doublemove legal
+		if double_move:
+			legal &= self.legal_move_pos(pacman_move, pacman_second_move)
 		if not legal:
 			return False
 		#it is legal, so now we can move
@@ -314,7 +351,37 @@ class Environment:
 		anim = FuncAnimation(fig, update, frames=len(history), interval=50)
 		anim.save('the_movie.mp4', writer='ffmpeg')
 	
+	def first_motion(self):
+		"""
+		Test case, produces first move possible that is legal, given 4 bots
+		"""
+		pacman_moves_list = self.adjacent(self.bots[-1].get_position())
+		adjacent_spots = self.adjacent(self.bots[0].get_position())
+		L1 = adjacent_spots
+		adjacent_spots = self.adjacent(self.bots[1].get_position())
+		L2 = adjacent_spots
+		adjacent_spots = self.adjacent(self.bots[2].get_position())
+		L3 = adjacent_spots
+		adjacent_spots = self.adjacent(self.bots[3].get_position())
+		L4 = adjacent_spots
+		all_pursuer_moves = itertools.product(L1, L2, L3, L4)
+
+		# check for anything in move_list that is legal
+		n = 0
+		for pac_move in pacman_moves_list:
+			for pursuer_moves in all_pursuer_moves:
+				if self.bots[-1].double_move():
+					pacman_second_move = self.bots[-1].get_position()
+				else:
+					pacman_second_move = None	
+				if self.play_round(pursuer_moves, pac_move, pacman_second_move):
+					# If it's true, we played a round, return
+					return True
+		return False
+		
+
 		
 env = Environment()
-# env.plot_grid()
-env.animate()
+env.first_motion()
+env.plot_grid()
+# env.animate()
