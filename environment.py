@@ -15,6 +15,7 @@ from matplotlib.animation import FuncAnimation
 import numpy as np
 from phantomBot import PhantomBot
 import csv
+import baseline1 as bs1
 
 import itertools
 
@@ -67,6 +68,8 @@ class Environment:
 		for bot in self.bots:
 			self.occupiedVertices.append(bot.get_position())
 			self.history.append([bot.get_position()])
+		
+		self.bs1 = bs1.BS1(self)
 		
 
 	def set_vertice_matrix(self):
@@ -493,14 +496,30 @@ class Environment:
 		print("err :( curr > randmax")
 		return False # we did not move
 		
-
+	def baseline_motion(self):
+		pursuer_pos = []
+		evader = self.bots[-1]
+		evader_pos = evader.get_position()
+		evader_second_move = None
+		for i in range(0, len(self.bots)-1):
+			pursuer_pos.append(self.bots[i].get_position())
+		pursuer_moves = self.bs1.pursuerAlg(pursuer_pos)
+		evader_move = self.bs1.evaderAlg(evader_pos)
+		if evader.double_move():
+			evader_second_move = self.bs1.evaderAlg((evader.get_position()))
+		if self.play_round(pursuer_moves, evader_move, evader_second_move):
+			return True	#we moved!
+		print ("err!!")
+		return False
 		
 env = Environment()
 # env.plot_grid()
 # env.plot_grid()
 # plt.show()
 # env.plot_grid()
-for i in range(250):
-	env.psuedo_rand_motion()
+for iii in range(250):
+	print(iii)
+	# env.psuedo_rand_motion()
+	env.baseline_motion()
 # 	env.plot_grid()
-env.animate()
+# env.animate()
