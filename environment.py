@@ -28,14 +28,15 @@ with open('map.csv') as csvfile:
 		x_val = int(row[0])
 		y_val = int(row[1])
 		presetVertices.append([x_val,y_val])
+		print(x_val, y_val)
 
 
 
 
-for i in range(presetSize[0]):
-	for j in range(presetSize[1]):
-		if (i !=j and (i != 6 or j > 5) and (j!=9 or i <2) ) or ((j == 6 or j == 2) and i == 6):
-			presetVertices.append([i,j])
+# for i in range(presetSize[0]):
+# 	for j in range(presetSize[1]):
+# 		if (i !=j and (i != 6 or j > 5) and (j!=9 or i <2) ) or ((j == 6 or j == 2) and i == 6):
+# 			presetVertices.append([i,j])
 
 class Environment:
 	def __init__(self, printAll=False, size=None, vertices=None, bots=None ):
@@ -48,7 +49,7 @@ class Environment:
 			pursuer1 = PhantomBot(printAll=False, pos=[0,1], pacman=False) 
 			pursuer2 = PhantomBot(printAll=False, pos=[0,5]) 
 			pursuer3 = PhantomBot(printAll=False, pos=[0,7]) 
-			pursuer4 = PhantomBot(printAll=False, pos=[5,1]) 
+			pursuer4 = PhantomBot(printAll=False, pos=[5,0])
 			pacmanBot = PhantomBot(printAll=False, pos=[6,6], pacman=True, speed=1.2) 
 			self.bots = [pursuer1, pursuer2, pursuer3, pursuer4, pacmanBot]
 			if (self.printAll):
@@ -126,7 +127,7 @@ class Environment:
 		if plot_points:
 			for bot in self.bots:
 				if bot.is_pacman():
-					circle = plt.Circle(bot.get_position(), radius, color='yellow')
+					circle = plt.Circle(bot.get_position(), radius, color='r')
 				else:
 					circle = plt.Circle(bot.get_position(), radius, color='blue')
 				ax.add_artist(circle)
@@ -375,7 +376,8 @@ class Environment:
 
 
 	def animate(self):
-		history = [[[np.cos(i), np.cos(i)], [np.sin(i), np.cos(i)], [np.cos(i), np.sin(i)]] for i in np.linspace(0, 20, 10)]
+		history = self.history #[[[np.cos(i), np.cos(i)], [np.sin(i), np.cos(i)], [np.cos(i), np.sin(i)]] for i in np.linspace(0, 20, 10)]
+		
 		history = np.asarray(history)
 		
 		
@@ -466,10 +468,10 @@ class Environment:
 		
 env = Environment()
 # env.plot_grid()
-env.plot_grid()
-plt.show()
-env.plot_grid()
-for i in range(5):
-	env.psuedo_rand_motion()
-	env.plot_grid()
-# env.animate()
+# env.plot_grid()
+# plt.show()
+# env.plot_grid()
+# for i in range(5):
+# 	env.psuedo_rand_motion()
+# 	env.plot_grid()
+env.animate()
