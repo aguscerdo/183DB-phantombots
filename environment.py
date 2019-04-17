@@ -7,19 +7,31 @@
 """
 how to make something move:
 use play_round. If it returns false, then your moves were illegal and nothing worked.
-If there is supposed to be a double_move for pacman, input it in play_round. 
+If there is supposed to be a double_move for pacman, input it in play_round.
 Examples on how to move are below (first_motion, psuedo_rand_motion)
 """
 import matplotlib.pyplot as plt
 from matplotlib.animation import FuncAnimation
 import numpy as np
 from phantomBot import PhantomBot
+import csv
+
 import itertools
 
 
 # TODO: change these later
-presetSize = [10, 10]
+presetSize = [11, 11]
 presetVertices = []
+with open('map.csv') as csvfile:
+	readCSV = csv.reader(csvfile, delimiter=",")
+	for row in readCSV:
+		x_val = int(row[0])
+		y_val = int(row[1])
+		presetVertices.append([x_val,y_val])
+
+
+
+
 for i in range(presetSize[0]):
 	for j in range(presetSize[1]):
 		if (i !=j and (i != 6 or j > 5) and (j!=9 or i <2) ) or ((j == 6 or j == 2) and i == 6):
@@ -259,9 +271,9 @@ class Environment:
 		### check if paths cross
 		pac_posx, pac_posy = self.bots[-1].get_position()
 		pac_hash = pac_posx+pac_posy*sz
-		# TODO no stay still? 
+		# TODO no stay still?
 		collision |= (pac_hash in hashs)
-			
+		
 		return collision
 
 
@@ -410,7 +422,7 @@ class Environment:
 				if self.bots[-1].double_move():
 					pacman_second_move = self.bots[-1].get_position()
 				else:
-					pacman_second_move = None	
+					pacman_second_move = None
 				if self.play_round(pursuer_moves, pac_move, pacman_second_move):
 					# If it's true, we played a round, return
 					return True
@@ -443,7 +455,7 @@ class Environment:
 				adjacent = self.adjacent(pacman_move)
 				rand_num = np.random.randint(0, high=4)
 				pacman_second_move = adjacent[rand_num]
-			else: 
+			else:
 				pacman_second_move = None
 			if self.play_round(pursuer_moves, pacman_move, pacman_second_move):
 				return True # if we moved, then great!
@@ -453,6 +465,9 @@ class Environment:
 
 		
 env = Environment()
+# env.plot_grid()
+env.plot_grid()
+plt.show()
 env.plot_grid()
 for i in range(5):
 	env.psuedo_rand_motion()
