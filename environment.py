@@ -67,7 +67,7 @@ class Environment:
 		self.history = []
 		for bot in self.bots:
 			self.occupiedVertices.append(bot.get_position())
-			self.history.append(bot.get_position())
+			self.history.append([bot.get_position()])
 		
 
 	def set_vertice_matrix(self):
