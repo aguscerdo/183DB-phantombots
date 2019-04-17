@@ -512,14 +512,3 @@ class Environment:
 		print ("err!!")
 		return False
 		
-env = Environment()
-# env.plot_grid()
-# env.plot_grid()
-# plt.show()
-# env.plot_grid()
-for iii in range(250):
-	print(iii)
-	# env.psuedo_rand_motion()
-	env.baseline_motion()
-# 	env.plot_grid()
-# env.animate()

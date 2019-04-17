@@ -1,11 +1,13 @@
 import matplotlib
+import numpy as np
+from environment import Environment
 
 class BS1:
     def __init__(self, env):
         self.env = env
     
     def evaderAlg(self, pos):
-        while (self.env.win_condition is 0): #while game is not over
+        while (not self.env.win_condition()): #while game is not over
             adj = self.env.adjacent(pos)  #find all adjacent spots
             for spots in adj:       #determine actual legal spots from adjacent spots
                 if self.env.legal_move_pos(pos, spots) is 0:
@@ -28,7 +30,7 @@ class BS1:
     
     def pursuerAlg(self, pos):   #pass in list of initial position of pursuer bots
         pursuerMoves = []
-        while (self.env.win_condition() == 0): #while game is not over
+        while (not self.env.win_condition()): #while game is not over
             for i in range(0, len(self.env.bots)-1):    #run for each pursuer
                 adj = self.env.adjacent(pos[i])
                 for spots in adj:
@@ -36,11 +38,92 @@ class BS1:
                         adj.remove(spots)   #remove spot if not valid
                 distances = []
                 for spot in adj:
-                    distances.append((self.env.dist(spot, self.env.bots[-1].get_position()))) #find distance of spot to pacman
-                min = 0
-                for i in range(len(distances)):
-                    if distances[i] < distances[min]:   #determine min distance
-                        min = i
-                pursuerMoves.append(adj[i])
+                    distances.append() #find distance of spot to pacman
+                mmin = 0
+                for j in range(len(distances)):
+                    if distances[j] < distances[mmin]:   #determine min distance
+                        mmin = j
+                pursuerMoves.append(adj[mmin])
                 
             return pursuerMoves
+        return []
+
+
+def baseline_motion(self):
+    pursuer_pos = []
+    evader = self.bots[-1]
+    evader_pos = evader.get_position()
+    evader_second_move = None
+    # for i in range(0, len(self.bots)-1):
+    #     pursuer_pos.append(self.bots[i].get_position())
+    pursuer_moves = self.bs1.pursuerAlg(pursuer_pos)
+    evader_move = self.bs1.evaderAlg(evader_pos)
+    if evader.double_move():
+        evader_second_move = self.bs1.evaderAlg((evader.get_position()))
+    if self.play_round(pursuer_moves, evader_move, evader_second_move):
+        return True	#we moved!
+    print ("err!!")
+    return False
+
+
+
+class BaseLine:
+    def __init__(self):
+        self.env = Environment()
+    
+    
+    def target_move(self):
+        move1, move2 = None, None
+        
+        target = self.env.bots[-1]
+        pos = target.get_position()
+        
+        adj = [spot for spot in self.env.adjacent(pos) if self.env.legal_move_pos(pos, spot)]
+        listOfDistances = [[self.env.dist(spot,self.env.bots[bot].get_position())
+                            for spot in adj ] for bot in range(len(self.env.bots)-1)]
+        
+        minDistances = [min(item) for item in listOfDistances]
+        max_d = np.argmax(minDistances)[0]
+        move1 = adj[max_d]
+        if target.double_move():
+            pos = adj[move1]
+
+            adj = [spot for spot in self.env.adjacent(pos) if self.env.legal_move_pos(pos, spot)]
+            listOfDistances = [[self.env.dist(spot, self.env.bots[bot].get_position())
+                                for spot in adj] for bot in range(len(self.env.bots) - 1)]
+    
+            minDistances = [min(item) for item in listOfDistances]
+            max_d = np.argmax(minDistances)[0]
+            move2 = adj[max_d]
+            
+        return move1, move2
+    
+    
+    def pursuer_move(self):
+        moves = []
+        for i in range(len(self.env.bots) - 1):
+            pos = self.env.bots[i].get_position()
+    
+            adj = [spot for spot in self.env.adjacent(pos) if self.env.legal_move_pos(pos, spot)]
+            
+            d = [(self.env.dist(spot, self.env.bots[-1].get_position())) for spot in adj]
+            min_d = np.argmin(d)[0]
+            moves.append(adj[min_d])
+            
+            
+            listOfDistances = [[self.env.dist(spot, self.env.bots[bot].get_position())
+                                for spot in adj] for bot in range(len(self.env.bots) - 1)]
+    
+            minDistances = [min(item) for item in listOfDistances]
+            maxi = np.argmax(minDistances)[0]
+            return adj[maxi]
+
+
+    def baseline_step(self):
+        target = self.env.bots[-1]
+        pursuer_moves = self.pursuer_move()
+        target_move1, target_move2 = self.target_move()
+        
+        ok = self.env.play_round(pursuer_moves, target_move1, target_move2)
+        if not ok:
+            raise ValueError("Failed to play round: {}, {}, {}".format(pursuer_moves, target_move1, target_move2))
