@@ -109,18 +109,18 @@ class Environment:
 		for i in range(self.size[0]):
 			for j in range(self.size[1]):
 				#plot vertex i,j
-				if (self.verticeMatrix[i,j]):
-					ax.plot(i, j, 'bx', label='point', alpha=0.8)
+				# if (self.verticeMatrix[i,j]):
+				# 	ax.plot(i, j, 'bx', label='point', alpha=0.8)
 				#plot line from i,j -> i+1,j 
 				if (i+1 < self.size[0] and self.verticeMatrix[i,j] and self.verticeMatrix[i+1,j]):
 					xs = [i, i+1]
 					ys = [j, j]
-					ax.plot(xs, ys, 'r', alpha=0.8)
+					ax.plot(xs, ys, 'k', alpha=0.8)
 				#plot line from i,j -> i,j+1
 				if (j+1 < self.size[1] and self.verticeMatrix[i,j] and self.verticeMatrix[i,j+1]):
 					xs = [i, i]
 					ys = [j, j+1]
-					ax.plot(xs, ys, 'r', alpha=0.8)
+					ax.plot(xs, ys, 'k', alpha=0.8)
 		#plot bots:
 		radius = 0.1
 		if plot_points:
@@ -397,30 +397,38 @@ class Environment:
 
 
 	def animate(self):
-		history = self.history #[[[np.cos(i), np.cos(i)], [np.sin(i), np.cos(i)], [np.cos(i), np.sin(i)]] for i in np.linspace(0, 20, 10)]
-		
-		history = np.array(history)
-		print(history)
+		"""
+		Animate the bot history
+		:return:
+		"""
+		history = np.array(self.history)
 		
 		# Format: list containing tuples (or lists) of coordinates, where idx 0 is target, idx 1.. are hunters
-		# self.plot_grid()
-		
-		fig = plt.figure()
+		fig = plt.figure(figsize=(8,8))
 		ax = fig.add_axes([0, 0, 1, 1])
+		ax.set_title("0")
 		self.plot_grid(ax, plot_points=False)
 		# ax.set_xlim(0, self.size)
 		# ax.set_ylim(0, self.size)
 
-		scatT = ax.scatter(history[-1, 0, 0], history[-1, 0, 1], c='k')
+		scatT = ax.scatter(history[-1, 0, 0], history[-1, 0, 1], c='r')
 		scatP = ax.scatter(history[-1:, 0, 0], history[-1:, 0, 1], c='b')
+		psT = ax.scatter(history[-1, 0, 0], history[-1, 0, 1], c='r', alpha=0.25)
+		psP = ax.scatter(history[-1:, 0, 0], history[-1:, 0, 1], c='b', alpha=0.25)
 		
 		def update(i):
+			if i % 50 == 0:
+				print("Step", i)
+			if i > 0:
+				psT.set_offsets(history[-1, i-1])
+				psP.set_offsets(history[:-1, i-1])
 			scatT.set_offsets(history[-1, i])
 			scatP.set_offsets(history[:-1, i])
+			ax.set_title("Step {}".format(i))
 		
-		
-		anim = FuncAnimation(fig, update, frames=len(history), interval=200)
+		anim = FuncAnimation(fig, update, frames=history.shape[1], interval=100)
 		anim.save('the_movie.mp4', writer='ffmpeg')
+	
 	
 	def first_motion(self):
 		"""
@@ -450,6 +458,7 @@ class Environment:
 					return True
 		print(":(")
 		return False
+	
 	
 	def psuedo_rand_motion(self):
 		"""
@@ -491,7 +500,7 @@ env = Environment()
 # env.plot_grid()
 # plt.show()
 # env.plot_grid()
-for i in range(1000):
+for i in range(250):
 	env.psuedo_rand_motion()
 # 	env.plot_grid()
 env.animate()
