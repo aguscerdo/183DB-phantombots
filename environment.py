@@ -353,6 +353,9 @@ class Environment:
 		:param pacman_second_move: second move for pacman (if it can move twice) [x, y]
 		:return: boolean
 		"""	
+		if (self.win_condition()):
+			print("you've already won")
+			return False
 		double_move = self.bots[-1].double_move()
 		if double_move and pacman_second_move is None:
 			return False # pacman should move twice here 
@@ -383,9 +386,13 @@ class Environment:
 		pacman = self.bots[-1]
 		pacman_pos = pacman.get_position()
 		adjacent_spaces = self.adjacent(pacman_pos)
+		# check if no available moves
 		win = True
 		for space in adjacent_spaces:
-			win &= self.legal_move_pos(pacman_pos, space)
+			win &= (not self.legal_move_pos(pacman_pos, space))
+		# check if pacman and pursuer share location
+		for i in range(len(self.bots)-1):
+			win |= (self.dist(self.bots[i].get_position(), pacman_pos) == 0)
 		return win
 		
 
