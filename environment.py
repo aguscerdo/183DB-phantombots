@@ -28,7 +28,6 @@ with open('map.csv') as csvfile:
 		x_val = int(row[0])
 		y_val = int(row[1])
 		presetVertices.append([x_val,y_val])
-		print(x_val, y_val)
 
 
 
@@ -50,7 +49,7 @@ class Environment:
 			pursuer2 = PhantomBot(printAll=False, pos=[0,5]) 
 			pursuer3 = PhantomBot(printAll=False, pos=[0,7]) 
 			pursuer4 = PhantomBot(printAll=False, pos=[5,0])
-			pacmanBot = PhantomBot(printAll=False, pos=[6,6], pacman=True, speed=1.2) 
+			pacmanBot = PhantomBot(printAll=False, pos=[5, 5], pacman=True, speed=1.2)
 			self.bots = [pursuer1, pursuer2, pursuer3, pursuer4, pacmanBot]
 			if (self.printAll):
 				print("Using preset size/edges/bots!")
@@ -378,7 +377,7 @@ class Environment:
 	def animate(self):
 		history = self.history #[[[np.cos(i), np.cos(i)], [np.sin(i), np.cos(i)], [np.cos(i), np.sin(i)]] for i in np.linspace(0, 20, 10)]
 		
-		history = np.asarray(history)
+		history = np.array(history)
 		
 		
 		# Format: list containing tuples (or lists) of coordinates, where idx 0 is target, idx 1.. are hunters
@@ -471,7 +470,7 @@ env = Environment()
 # env.plot_grid()
 # plt.show()
 # env.plot_grid()
-# for i in range(5):
-# 	env.psuedo_rand_motion()
+for i in range(5):
+	env.psuedo_rand_motion()
 # 	env.plot_grid()
 env.animate()
