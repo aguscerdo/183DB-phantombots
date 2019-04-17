@@ -353,6 +353,9 @@ class Environment:
 		:param pacman_second_move: second move for pacman (if it can move twice) [x, y]
 		:return: boolean
 		"""	
+		if (self.win_condition()):
+			print("you've already won")
+			return False
 		double_move = self.bots[-1].double_move()
 		if double_move and pacman_second_move is None:
 			return False # pacman should move twice here 
