@@ -177,6 +177,13 @@ class Environment:
 		"""
 		# True if dist == 1 and both vertices in set and no collision
 		valid_move = True
+		#check if points are even valid
+		valid_move &= (end_pos[0] < self.size[0] and end_pos[1] < self.size[1])
+		valid_move &= (end_pos[0] >= 0 and end_pos[1] >= 0)
+		valid_move &= (start_pos[0] < self.size[0] and start_pos[1] < self.size[1])
+		valid_move &= (start_pos[0] >= 0 and start_pos[1] >= 0)
+		if valid_move == False:
+			return valid_move
 		valid_move &= (self.dist(start_pos, end_pos) == 1)
 		valid_move &= (self.verticeMatrix[end_pos[0], end_pos[1]] == 1)
 		valid_move &= (self.verticeMatrix[start_pos[0], start_pos[1]] == 1)
@@ -213,6 +220,13 @@ class Environment:
 		start_pos = pacman_move
 		end_pos = pacman_second_move
 		valid_move = True
+		#check if points are even valid
+		valid_move &= (end_pos[0] < self.size[0] and end_pos[1] < self.size[1])
+		valid_move &= (end_pos[0] >= 0 and end_pos[1] >= 0)
+		valid_move &= (start_pos[0] < self.size[0] and start_pos[1] < self.size[1])
+		valid_move &= (start_pos[0] >= 0 and start_pos[1] >= 0)
+		if valid_move == False:
+			return valid_move
 		valid_move &= (self.dist(start_pos, end_pos) == 1)
 		valid_move &= (self.verticeMatrix[end_pos[0], end_pos[1]] == 1)
 		valid_move &= (self.verticeMatrix[start_pos[0], start_pos[1]] == 1)
