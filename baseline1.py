@@ -5,25 +5,25 @@ class BS1:
         self.env = env
     
     def evaderAlg(self, pos):
-        while (self.env.win_condition is 0): #while game is not over
-            adj = self.env.adjacent(pos)  #find all adjacent spots
-            for spots in adj:       #determine actual legal spots from adjacent spots
-                if self.env.legal_move_pos(pos, spots) is 0:
-                    adj.remove(spots)
-            listOfDistances = []    #list of list of distances
-            for spot in adj:    #find distances from each bot to spot
-                distances = []
-                for bot in range(len(self.env.bots)-1):
-                    distances.append(self.env.dist(spot,self.env.bots[bot].get_position()))
-                listOfDistances.append((distances))
-            minDistances = []
-            for item in listOfDistances:
-                minDistances.append(min(item))
-            maxMin = 0
-            for i in range(len(minDistances)):
-                if minDistances[i] < minDistances[maxMin]:
-                    maxMin = i
-            return adj[maxMin]
+        #while (self.env.win_condition() == 0): #while game is not over
+		adj = self.env.adjacent(pos)  #find all adjacent spots
+		for spots in adj:       #determine actual legal spots from adjacent spots
+			if self.env.legal_move_pos(pos, spots) == 0:
+				adj.remove(spots)
+		listOfDistances = []    #list of list of distances
+		for spot in adj:    #find distances from each bot to spot
+			distances = []
+			for bot in range(len(self.env.bots)-1):
+				distances.append(self.env.dist(spot,self.env.bots[bot].get_position()))
+			listOfDistances.append((distances))
+		minDistances = []
+		for item in listOfDistances:
+			minDistances.append(min(item))
+		maxMin = 0
+		for i in range(len(minDistances)):
+			if minDistances[i] < minDistances[maxMin]:
+				maxMin = i
+		return adj[maxMin]
     
     
     def pursuerAlg(self, pos):   #pass in list of initial position of pursuer bots

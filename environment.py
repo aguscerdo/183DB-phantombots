@@ -383,9 +383,13 @@ class Environment:
 		pacman = self.bots[-1]
 		pacman_pos = pacman.get_position()
 		adjacent_spaces = self.adjacent(pacman_pos)
+		# check if no available moves
 		win = True
 		for space in adjacent_spaces:
-			win &= self.legal_move_pos(pacman_pos, space)
+			win &= (not self.legal_move_pos(pacman_pos, space))
+		# check if pacman and pursuer share location
+		for i in range(len(self.bots)-1):
+			win |= (self.dist(self.bots[i].get_position, pacman_pos) == 0)
 		return win
 		
 
@@ -517,9 +521,9 @@ env = Environment()
 # env.plot_grid()
 # plt.show()
 # env.plot_grid()
-for iii in range(250):
+for iii in range(4):
 	print(iii)
 	# env.psuedo_rand_motion()
 	env.baseline_motion()
-# 	env.plot_grid()
+ 	env.plot_grid()
 # env.animate()
