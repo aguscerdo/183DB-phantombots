@@ -285,7 +285,6 @@ class Environment:
 		"""
 		self.bots[bot].move(end_pos)
 		self.occupiedVertices[bot] = end_pos
-		self.history[bot].append(end_pos)
 
 	def get_state(self):
 		"""
@@ -321,6 +320,13 @@ class Environment:
 		adj = [ [x+1, y], [x-1, y], [x, y+1], [x, y-1] ]
 		return adj
 
+	def update_history(self):
+		"""
+		Updates history given current positions
+		"""
+		for i in range(len(self.bots)):
+			self.history[i].append(self.bots[i].get_position())
+
 	def play_round(self, pursuer_moves, pacman_move, pacman_second_move=None):
 		"""
 		Plays one round, moving pursuers and pacman, if possible.
@@ -346,9 +352,11 @@ class Environment:
 		self.move(-1, pacman_move)
 		for i in range(len(self.bots)-1):
 			self.move(i, pursuer_moves[i])
+		self.update_history()
 		#if pacman can move again, move again
 		if  double_move:
 			self.move(-1, pacman_second_move)
+			self.update_history()
 		return True
 
 	def win_condition(self):
