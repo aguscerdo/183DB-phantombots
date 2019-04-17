@@ -204,7 +204,8 @@ class Environment:
 		"""
 		Takes in moves of all pursuers and returns True if no collisions AND legal
 		"""
-		legal = not self.collision_pursuers(pursuer_moves)
+		#legal = not self.collision_pursuers(pursuer_moves)
+		legal = True # Don;t check for collision !
 		for i in range(len(self.bots)-1):
 			legal &= self.legal_move_bot(i, pursuer_moves[i])
 		return legal
@@ -237,6 +238,15 @@ class Environment:
 			valid_move &= (self.dist(end_pos, self.bots[i].get_position()) > 0)
 		return valid_move
 	
+	def collision_current_state(self, bot, end_pos):
+		""" 
+		Return True if bot moving to end_pos will collide with another bot
+		"""
+		collision = False
+		for i in range(len(self.bots)-1):
+			if i != bot:
+				collision |= self.dist(end_pos, self.bots[i].get_position())
+		return collision
 
 	def collision_pursuers(self, pursuer_moves):
 		"""
@@ -370,7 +380,10 @@ class Environment:
 		#it is legal, so now we can move
 		self.move(-1, pacman_move)
 		for i in range(len(self.bots)-1):
-			self.move(i, pursuer_moves[i])
+			if not self.collision_current_state(i, pursuer_moves[i]):
+				self.move(i, pursuer_moves[i]) # move
+			else:
+				self.move(i, self.bots[i].get_position()) #stay still
 		self.update_history()
 		#if pacman can move again, move again
 		if  double_move:
