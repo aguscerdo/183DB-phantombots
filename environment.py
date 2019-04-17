@@ -389,7 +389,7 @@ class Environment:
 			win &= (not self.legal_move_pos(pacman_pos, space))
 		# check if pacman and pursuer share location
 		for i in range(len(self.bots)-1):
-			win |= (self.dist(self.bots[i].get_position, pacman_pos) == 0)
+			win |= (self.dist(self.bots[i].get_position(), pacman_pos) == 0)
 		return win
 		
 
@@ -527,3 +527,21 @@ for iii in range(4):
 	env.baseline_motion()
  	env.plot_grid()
 # env.animate()
+
+"""test functions"""
+# test functions
+def test_win_fcn():
+	env = Environment()
+	for i in range(len(env.bots)):
+		env.bots[i].move([0,i])
+	env.bots[-1].move([0,6])
+	env.plot_grid()
+	print("We have not won, this should be False: " + str(env.win_condition()))
+	env.bots[-1].move([0,2])
+	env.plot_grid()
+	print("We have won, this should be True: " + str(env.win_condition()))
+	env.bots[0].move([1,2])
+	env.bots[2].move([0,6])
+	env.plot_grid()
+	print("We have won, this should be True: " + str(env.win_condition()))
+	
