@@ -45,10 +45,10 @@ class Environment:
 		if size is None or vertices is None or bots is None:
 			self.size = presetSize
 			self.vertices = presetVertices
-			pursuer1 = PhantomBot(printAll=False, pos=[0,1], pacman=False) 
-			pursuer2 = PhantomBot(printAll=False, pos=[0,5]) 
-			pursuer3 = PhantomBot(printAll=False, pos=[0,7]) 
-			pursuer4 = PhantomBot(printAll=False, pos=[5,0])
+			pursuer1 = PhantomBot(printAll=False, pos=[10,10], pacman=False)
+			pursuer2 = PhantomBot(printAll=False, pos=[0,0])
+			pursuer3 = PhantomBot(printAll=False, pos=[0,10])
+			pursuer4 = PhantomBot(printAll=False, pos=[10,0])
 			pacmanBot = PhantomBot(printAll=False, pos=[5, 5], pacman=True, speed=1.2)
 			self.bots = [pursuer1, pursuer2, pursuer3, pursuer4, pacmanBot]
 			if (self.printAll):
@@ -110,17 +110,17 @@ class Environment:
 			for j in range(self.size[1]):
 				#plot vertex i,j
 				if (self.verticeMatrix[i,j]):
-					ax.plot(i, j, 'bx', label='point')
+					ax.plot(i, j, 'bx', label='point', alpha=0.8)
 				#plot line from i,j -> i+1,j 
 				if (i+1 < self.size[0] and self.verticeMatrix[i,j] and self.verticeMatrix[i+1,j]):
 					xs = [i, i+1]
 					ys = [j, j]
-					ax.plot(xs, ys, 'r')
+					ax.plot(xs, ys, 'r', alpha=0.8)
 				#plot line from i,j -> i,j+1
 				if (j+1 < self.size[1] and self.verticeMatrix[i,j] and self.verticeMatrix[i,j+1]):
 					xs = [i, i]
 					ys = [j, j+1]
-					ax.plot(xs, ys, 'r')
+					ax.plot(xs, ys, 'r', alpha=0.8)
 		#plot bots:
 		radius = 0.1
 		if plot_points:
@@ -386,7 +386,7 @@ class Environment:
 		history = self.history #[[[np.cos(i), np.cos(i)], [np.sin(i), np.cos(i)], [np.cos(i), np.sin(i)]] for i in np.linspace(0, 20, 10)]
 		
 		history = np.array(history)
-		
+		print(history)
 		
 		# Format: list containing tuples (or lists) of coordinates, where idx 0 is target, idx 1.. are hunters
 		# self.plot_grid()
@@ -397,16 +397,15 @@ class Environment:
 		# ax.set_xlim(0, self.size)
 		# ax.set_ylim(0, self.size)
 
-		scatT = ax.scatter(history[0, -1, 0], history[0, -1, 1], c='r')
-		scatP = ax.scatter(history[0, :-1, 0], history[0, :-1, 1], c='b')
+		scatT = ax.scatter(history[-1, 0, 0], history[-1, 0, 1], c='k')
+		scatP = ax.scatter(history[-1:, 0, 0], history[-1:, 0, 1], c='b')
 		
 		def update(i):
-			h = history[i]
-			scatT.set_offsets(h[-1])
-			scatP.set_offsets(h[:-1])
+			scatT.set_offsets(history[-1, i])
+			scatP.set_offsets(history[:-1, i])
 		
 		
-		anim = FuncAnimation(fig, update, frames=len(history), interval=10)
+		anim = FuncAnimation(fig, update, frames=len(history), interval=200)
 		anim.save('the_movie.mp4', writer='ffmpeg')
 	
 	def first_motion(self):
@@ -478,7 +477,7 @@ env = Environment()
 # env.plot_grid()
 # plt.show()
 # env.plot_grid()
-for i in range(5):
+for i in range(1000):
 	env.psuedo_rand_motion()
 # 	env.plot_grid()
 env.animate()
