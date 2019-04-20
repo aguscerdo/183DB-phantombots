@@ -46,10 +46,10 @@ class Environment:
 		if size is None or vertices is None or bots is None:
 			self.size = presetSize
 			self.vertices = presetVertices
-			pursuer1 = PhantomBot(printAll=False, pos=[10,10], pacman=False)
-			pursuer2 = PhantomBot(printAll=False, pos=[0,0])
-			pursuer3 = PhantomBot(printAll=False, pos=[0,10])
-			pursuer4 = PhantomBot(printAll=False, pos=[10,0])
+			pursuer1 = PhantomBot(printAll=False, pos=[0,0])
+			pursuer2 = PhantomBot(printAll=False, pos=[0,2])
+			pursuer3 = PhantomBot(printAll=False, pos=[0,4])
+			pursuer4 = PhantomBot(printAll=False, pos=[0,6])
 			pacmanBot = PhantomBot(printAll=False, pos=[5, 5], pacman=True, speed=1.2)
 			self.bots = [pursuer1, pursuer2, pursuer3, pursuer4, pacmanBot]
 			if (self.printAll):
@@ -117,12 +117,12 @@ class Environment:
 				if (i+1 < self.size[0] and self.verticeMatrix[i,j] and self.verticeMatrix[i+1,j]):
 					xs = [i, i+1]
 					ys = [j, j]
-					ax.plot(xs, ys, 'k', alpha=0.8)
+					ax.plot(xs, ys, 'k', alpha=0.7)
 				#plot line from i,j -> i,j+1
 				if (j+1 < self.size[1] and self.verticeMatrix[i,j] and self.verticeMatrix[i,j+1]):
 					xs = [i, i]
 					ys = [j, j+1]
-					ax.plot(xs, ys, 'k', alpha=0.8)
+					ax.plot(xs, ys, 'k', alpha=0.7)
 		#plot bots:
 		radius = 0.1
 		if plot_points:
@@ -245,7 +245,7 @@ class Environment:
 		collision = False
 		for i in range(len(self.bots)-1):
 			if i != bot:
-				collision |= self.dist(end_pos, self.bots[i].get_position())
+				collision |= (self.dist(end_pos, self.bots[i].get_position()) == 0)
 		return collision
 
 	def collision_pursuers(self, pursuer_moves):
@@ -439,8 +439,8 @@ class Environment:
 		psP = ax.scatter(history[-1:, 0, 0], history[-1:, 0, 1], c='b', alpha=0.25)
 		
 		def update(i):
-			if i % 50 == 0:
-				print("Step", i)
+			# if i % 50 == 0:
+			# 	print("Step", i)
 			if i > 0:
 				psT.set_offsets(history[-1, i-1])
 				psP.set_offsets(history[:-1, i-1])
@@ -448,7 +448,7 @@ class Environment:
 			scatP.set_offsets(history[:-1, i])
 			ax.set_title("Step {}".format(i))
 		
-		anim = FuncAnimation(fig, update, frames=history.shape[1], interval=100)
+		anim = FuncAnimation(fig, update, frames=history.shape[1], interval=115)
 		anim.save('the_movie.mp4', writer='ffmpeg')
 	
 	
