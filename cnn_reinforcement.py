@@ -17,6 +17,7 @@ class MultiAgentCNN:
 			'cnn4': (3, 3, 32),
 			'cnn5': (3, 3, 32),
 			'cnn6': (3, 3, 32),
+			'output': 2
 		}
 	
 	
@@ -30,5 +31,7 @@ class MultiAgentCNN:
 		out = k.layers.MaxPooling2D()(concat)
 		
 		return out
+	
+	
 	
 		
