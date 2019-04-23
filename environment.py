@@ -322,7 +322,6 @@ class Environment:
 		pac_state = np.zeros(self.size)
 		posx, posy = self.bots[-1].get_position()
 		pac_state[posx, posy] = 1
-		state.append(allies)
 
 		phantom_state = np.zeros(self.size)
 		for i in range(len(self.bots)-1):
@@ -333,22 +332,22 @@ class Environment:
 
 		self_state = np.zeros(self.size)
 		curr_bot = self.bots[bot]
-			bot_posx, bot_posy = curr_bot.get_position()
-			self_state[bot_posx, bot_posy] = 1
+		bot_posx, bot_posy = curr_bot.get_position()
+		self_state[bot_posx, bot_posy] = 1
 		state.append(self_state)
 		
 		pacman = (bot == -1) or (bot >= len(self.bots)-1)
 		if pacman:
 			state.append(pac_state)
-			state.append(bot_state)
+			state.append(phantom_state)
 		else:
 			state.append(bot_state)
-			state.append(pac_state)
+			state.append(phantom_state)
 		return state
 		
 	def loss(self, bot=-1, state=None):
 		return -self.reward(bot, state)
-		
+
 	def reward(self, bot=-1, state=None):
 		"""
 		Gets the reward from target state, if state is None uses current state
