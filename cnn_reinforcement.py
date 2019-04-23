@@ -65,6 +65,10 @@ class MultiAgentCNN:
 		self.model.compile('ADAM')
 	
 	
+	@staticmethod
+	def loss_function(val):
+		pass
+	
 
 if __name__ == '__main__':
 	m = MultiAgentCNN()
