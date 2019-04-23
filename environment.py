@@ -312,29 +312,72 @@ class Environment:
 		self.bots[bot].move(end_pos)
 		self.occupiedVertices[bot] = end_pos
 
-	def get_state(self):
+	def get_state_channels(self, bot=-1):
 		"""
-		Returns the state of the system
-		"""
-		# state[i] = position of bot i, 
-		# i = -1 corresponds to pacman. 
-		state = np.copy(self.occupiedVertices)
-		# TODO: manipulate state if necessary
-		return state
-
-	def get_state_channels(self):
-		"""
-		Returns state as channels
+		Returns state as channels, 
+		State = Enviroment, Self, Allies, Enemies 
 		"""
 		state = [self.verticeMatrix]
-		for bot in self.bots:
-			bot_state = np.zeros(self.size)
-			bot_posx, bot_posy = bot.get_position()
-			bot_state[bot_posx, bot_posy] = 1
+		
+		pac_state = np.zeros(self.size)
+		posx, posy = self.bots[-1].get_position()
+		pac_state[posx, posy] = 1
+		state.append(allies)
+
+		phantom_state = np.zeros(self.size)
+		for i in range(len(self.bots)-1):
+			curr_bot = self.bots[i]
+			bot_posx, bot_posy = curr_bot.get_position()
+			phantom_state[bot_posx, bot_posy] = 1
 			#TODO: add more to state? 
-			state.append[bot_state]
+
+		self_state = np.zeros(self.size)
+		curr_bot = self.bots[bot]
+			bot_posx, bot_posy = curr_bot.get_position()
+			self_state[bot_posx, bot_posy] = 1
+		state.append(self_state)
+		
+		pacman = (bot == -1) or (bot >= len(self.bots)-1)
+		if pacman:
+			state.append(pac_state)
+			state.append(bot_state)
+		else:
+			state.append(bot_state)
+			state.append(pac_state)
 		return state
 		
+	def loss(self, bot=-1, state=None):
+		return -self.reward(bot, state)
+		
+	def reward(self, bot=-1, state=None):
+		"""
+		Gets the reward from target state, if state is None uses current state
+		"""
+		if state is None:
+			state = self.get_state_channels(bot=bot)
+		pacman = (bot == -1) or (bot >= len(self.bots)-1)
+		pursuer_reward = 0
+		env_state, self_state, ally_state, enemy_state = state
+		# if collision between pursuer and pacman, get reward
+		collision_matrix = np.equal(ally_state, enemy_state)
+		pursuer_reward += np.sum(collision_matrix)
+		# if collision between allies and environment, get negative reward
+		# if collision between enemies and environment, get positive reward
+		# env = 0 and ally/enemy = 1 => reward nonzero
+		# wall = 1 and ally/enemy = 1 => ally/enemy in wall
+		bot_reward = 0
+		walls = 1 + env_state
+		collision_matrix = np.equal(walls, ally_state)
+		bot_reward += -np.sum(collision_matrix)*100
+		collision_matrix = np.equal(walls, self_state)
+		bot_reward += -np.sum(collision_matrix)*1000
+		collision_matrix = np.equal(walls, enemy_state)
+		bot_reward += np.sum(collision_matrix)*100
+
+		# reward for enemies is negative reward for pacman
+		if pacman:
+			return bot_reward - pursuer_reward
+		return bot_reward + pursuer_reward
 
 	def adjacent(self, pos):
 		"""
@@ -530,4 +573,6 @@ class Environment:
 			return True	#we moved!
 		print ("err!!")
 		return False
+
+	
 		
