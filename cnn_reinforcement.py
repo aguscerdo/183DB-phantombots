@@ -1,12 +1,19 @@
 import tensorflow as  tf
 import numpy as np
 import keras as k
+import os
+import time
 
 class MultiAgentCNN:
 	def __init__(self, params=None):
 		self.params = dict()
 		self.set_default_params()
 		self.model = k.Model()
+		self.i = 0
+		self.path = './weights'
+		if not os.path.exists(self.path):
+			os.mkdir(self.path)
+		
 	
 	def set_default_params(self):
 		self.params = {
@@ -40,15 +47,15 @@ class MultiAgentCNN:
 		nn = k.layers.Dense(self.params['nn1'], activation='relu')(layer_in)
 		nn = k.layers.BatchNormalization()(nn)
 		nn = k.layers.Dropout(self.params['dropout'])(nn)
-		nn = k.layers.Dense(self.params['nn2'], activation='relu')(nn)
-		nn = k.layers.BatchNormalization()(nn)
-		nn = k.layers.Dropout(self.params['dropout'])(nn)
+		# nn = k.layers.Dense(self.params['nn2'], activation='relu')(nn)
+		# nn = k.layers.BatchNormalization()(nn)
+		# nn = k.layers.Dropout(self.params['dropout'])(nn)
 		
 		return k.layers.Dense(self.params['output'], activation='softmax')(nn)
 
 	
 	def build(self):
-		layer_in = k.layers.Input((10, 10, 4), (None, 10, 10, 4), sparse=False)
+		layer_in = k.layers.Input((11, 11, 4), (None, 11, 11, 4), sparse=False)
 		res = self.residual_layer(layer_in, self.params['cnn1'], self.params['cnn2'])
 		res = self.residual_layer(res, self.params['cnn3'], self.params['cnn4'])
 		
@@ -62,16 +69,54 @@ class MultiAgentCNN:
 		if self.model is None:
 			return
 		
-		self.model.compile('ADAM')
+		self.model.compile(optimizer='ADAM', loss=self.loss_function, metrics=['accuracy'])
+	
+	
+	def exec(self):
+		self.build()
+		self.compile()
 	
 	
 	@staticmethod
-	def loss_function(val):
-		pass
+	def loss_function(pred, reward):
+		probs = k.layers.Softmax()(pred)
+		
+		return k.backend.sum((probs * (pred - reward)) ** 2)
 	
-
+	
+	def predict(self, tensor_vals):
+		out = self.model.predict(tensor_vals)
+		return out
+	
+	
+	def train(self, tensor_list, rewards):
+		np_list = np.asarray(tensor_list)
+		np_rewards = np.asarray(rewards)
+		
+		history = self.model.fit(np_list, np_rewards, epochs=5)
+		self.save_weights(history['loss'][-1])
+		
+		
+	def save_weights(self, loss):
+		if self.i % 25:
+			return
+		
+		now = time.time()
+		path = '{}/{}-{}.k'.format(self.path, now, loss)
+		os.mkdir(path)
+		
+		self.model.save_weights(path, overwrite=False)
+	
+	
+	def load_weights(self):
+		ldir = [l for l in os.listdir(self.path) if l.endswith('.k')]
+		ldir.sort(reverse=True)
+		self.model.load_weights(ldir[0])
+		
+		
+		
 if __name__ == '__main__':
 	m = MultiAgentCNN()
 	m.build()
-	# m.compile()
+	m.compile()
 	m.model.summary()
