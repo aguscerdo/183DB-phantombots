@@ -20,7 +20,6 @@ import baseline1 as bs1
 import itertools
 
 
-# TODO: change these later
 presetSize = [11, 11]
 presetVertices = []
 with open('map.csv') as csvfile:
@@ -345,12 +344,12 @@ class Environment:
 			state.append(pac_state)
 		return state
 		
-	def loss(self, bot=-1, state=None):
-		return -self.reward(bot, state)
+	def immediate_loss(self, bot=-1, state=None):
+		return -self.immediate_reward(bot, state)
 
-	def reward(self, bot=-1, state=None):
+	def immediate_reward(self, bot=-1, state=None):
 		"""
-		Gets the reward from target state, if state is None uses current state
+		Gets the immediate reward from target state, if state is None uses current state
 		"""
 		if state is None:
 			state = self.get_state_channels(bot=bot)
@@ -377,6 +376,13 @@ class Environment:
 		if pacman:
 			return bot_reward - pursuer_reward
 		return bot_reward + pursuer_reward
+	
+	def get_reward(self, bot=-1, state):
+		"""
+		Returns reward for being in state
+		"""
+		#TODO
+		return self.immediate_reward(bot=bot, state=state)
 
 	def adjacent(self, pos):
 		"""
@@ -572,6 +578,73 @@ class Environment:
 			return True	#we moved!
 		print ("err!!")
 		return False
+
+	def rand_initialise(self):
+		sizex, sizey = self.size
+		for i in range(len(bots)):
+			randx = np.random.randint(0, high=sizex)
+			randy = np.random.randint(0, high=sizey)
+			while [randx, randy] in self.occupiedVertices:
+				randx = np.random.randint(0, high=sizex)
+				randy = np.random.randint(0, high=sizey)
+			self.move(i, [randx, randy])
+		self.history = []
+	
+	def get_batch(self, bot=-1, N=8 ):
+		"""
+		returns batch of states, rewards
+		states are all with respect to a specific bot. N = batch size
+		WLOG 
+		bot = -1 -> pacman
+		bot = 1 -> pursuers
+		"""
+		states = []
+		rewards = []
+		for i in range(N):
+			self.rand_initialise()
+			state = self.get_state_channels(bot=bot)
+			states.append( state )
+			reward = self.get_reward(state)
+			rewards.append(reward)
+		return states, rewards
+
+	def get_simulation_history(self, algorithm="bs1", bot=-1, N=10, subsample=0):
+		"""
+		Simulate N rounds of a game with current initial conditions. return history of state, reward
+		states are all with respect to a specific bot. If subsample != 0, takes every subsample sample.
+		WLOG 
+		bot = -1 -> pacman
+		bot = 1 -> pursuers 
+		"""
+		states = []
+		rewards = []
+		state = self.get_state_channels(bot=bot)
+		states.append( state )
+		reward = self.get_reward(state)
+		rewards.append(reward)
+		discount_factor = 0.95 # TODO: check this
+		current_discount = discount_factor
+		for i in range(N):
+			if algorithm in "bs1":
+				self.baseline_motion()
+			else:
+				self.baseline_motion() #TODO: add more algorithms
+			state = self.get_state_channels(bot=bot)
+			states.append( state )
+			current_discount *= discount_factor
+			reward = self.get_reward(state)*current_discount
+			rewards.append(reward)
+		#TODO: maybe randomly subsample instead of every nth ?
+		if subsample >= 1:
+			step = int(subsample)
+			states = states[0::step]
+			rewards = rewards[0::step]
+		return states, rewards
+			
+
+
+			
+
 
 	
 		
