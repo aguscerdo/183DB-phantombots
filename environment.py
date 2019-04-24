@@ -341,8 +341,8 @@ class Environment:
 			state.append(pac_state)
 			state.append(phantom_state)
 		else:
-			state.append(bot_state)
 			state.append(phantom_state)
+			state.append(pac_state)
 		return state
 		
 	def loss(self, bot=-1, state=None):
