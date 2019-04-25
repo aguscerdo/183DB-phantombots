@@ -13,6 +13,8 @@ class MultiAgentCNN:
 		self.path = './weights'
 		if not os.path.exists(self.path):
 			os.mkdir(self.path)
+			
+		self.action_list = []
 		
 	
 	def set_default_params(self):
@@ -45,8 +47,8 @@ class MultiAgentCNN:
 	
 	def fully_connected(self, layer_in):
 		nn = k.layers.Dense(self.params['nn1'], activation='relu')(layer_in)
-		nn = k.layers.BatchNormalization()(nn)
 		nn = k.layers.Dropout(self.params['dropout'])(nn)
+		nn = k.layers.BatchNormalization()(nn)
 		# nn = k.layers.Dense(self.params['nn2'], activation='relu')(nn)
 		# nn = k.layers.BatchNormalization()(nn)
 		# nn = k.layers.Dropout(self.params['dropout'])(nn)
@@ -56,20 +58,28 @@ class MultiAgentCNN:
 	
 	def build(self):
 		layer_in = k.layers.Input((11, 11, 4), (None, 11, 11, 4), sparse=False)
-		res = self.residual_layer(layer_in, self.params['cnn1'], self.params['cnn2'])
-		res = self.residual_layer(res, self.params['cnn3'], self.params['cnn4'])
+		actions = k.layers.Input((1,), (None, 1), dtype=tf.int32)
+		
+		with tf.name_scope('res1'):
+			res = self.residual_layer(layer_in, self.params['cnn1'], self.params['cnn2'])
+		with tf.name_scope('res2'):
+			res = self.residual_layer(res, self.params['cnn3'], self.params['cnn4'])
 		
 		flat = k.layers.Flatten()(res)
-		out = self.fully_connected(flat)
 		
-		self.model = k.Model(inputs=layer_in, outputs=out)
+		with tf.name_scope('fully_connected'):
+			out = self.fully_connected(flat)
+			
+		reward = tf.gather(out, actions)
+		
+		self.model = k.Model(inputs=layer_in, outputs=[out, reward])
 		
 		
 	def compile(self):
 		if self.model is None:
 			return
 		
-		self.model.compile(optimizer='ADAM', loss=self.loss_function, metrics=['accuracy'])
+		self.model.compile(optimizer='ADAM', loss=[None, 'mse'], metrics=['accuracy'], loss_weights=[0., 1.])
 	
 	
 	def exec(self):
@@ -77,19 +87,25 @@ class MultiAgentCNN:
 		self.compile()
 	
 	
-	@staticmethod
-	def loss_function(pred, reward):
-		probs = k.layers.Softmax()(pred)
+	def loss_function(self, y_pred, y_label):
+		# rewards = y_pred[0:4]
+		# action = y_pred[4]
 		
-		return k.backend.sum((probs * (pred - reward)) ** 2)
+		loss = tf.reduce_sum(tf.square(y_label - y_pred))
+		return loss
 	
 	
-	def predict(self, tensor_vals):
+	def predict(self, tensor_vals, epsilon):
 		out = self.model.predict(tensor_vals)
-		return out
+		if np.random.uniform() < epsilon:
+			return np.random.randint(0, 4)
+		else:
+			return np.argmax(out)
 	
 	
-	def train(self, tensor_list, rewards):
+	def train(self, tensor_list, rewards, actions):
+		# self.action_list = tf.cast(np.asarray(actions), tf.int32)  # list of ints [0, 4]
+		
 		np_list = np.asarray(tensor_list)
 		np_rewards = np.asarray(rewards)
 		
@@ -117,6 +133,31 @@ class MultiAgentCNN:
 		
 if __name__ == '__main__':
 	m = MultiAgentCNN()
-	m.build()
-	m.compile()
+	m.exec()
 	m.model.summary()
+	
+	batch_in = [
+		[
+			[[1, 0, 0, 0],
+			 [0, 0, 0, 0],
+			 [0, 0, 0, 0],
+			 [0, 0, 0, 0]],
+			[[1, 0, 1, 0],
+			 [1, 0, 0, 0],
+			 [0, 0, 0, 0],
+			 [0, 0, 0, 0]],
+			[[0, 0, 0, 0],
+			 [0, 0, 0, 0],
+			 [0, 1, 0, 0],
+			 [0, 0, 0, 0]],
+			[[1, 0, 0, 0],
+			 [1, 0, 0, 0],
+			 [1, 1, 1, 0],
+			 [0, 0, 0, 0]]
+		]
+	]
+	
+	reward = [-3.4351]
+	action = [1]
+	
+	# m.train(batch_in, reward, action)
