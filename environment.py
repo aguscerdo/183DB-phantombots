@@ -377,12 +377,15 @@ class Environment:
 			return bot_reward - pursuer_reward
 		return bot_reward + pursuer_reward
 	
-	def get_reward(self, bot=-1, state):
+	def immediate_reward_to_total(self, rewards, discount_factor):
 		"""
-		Returns reward for being in state
+		given list of rewards, ri = reward at time i, propogate rewards backward
 		"""
-		#TODO
-		return self.immediate_reward(bot=bot, state=state)
+		total_rewards = np.copy(rewards)
+		#loop backwards from 2nd last el to last el
+		for i in range(len(total_rewards)-2, -1, -1):
+			total_rewards[i] += total_rewards[i+1]*discount_factor
+		return total_rewards
 
 	def adjacent(self, pos):
 		"""
@@ -400,6 +403,34 @@ class Environment:
 		"""
 		for i in range(len(self.bots)):
 			self.history[i].append(self.bots[i].get_position())
+	
+	def reset_history(self):
+		"""
+		resets current history
+		"""
+		self.history = []
+		for bot in self.bots:
+			self.history.append([bot.get_position()])
+
+
+	def history_to_actions(self):
+		"""
+		Returns list of actions each bot took, -1 if no action (e.g pacman double move, pursuers all -1)
+		"""
+		actions = []
+		# 1 set of actions per history_i, history_(i+1)
+		for i in range(len(self.history)-1):
+			poses_i = self.history[i]
+			poses_ip1 = self.history[i+1]
+			action_set_i = []
+			# 1 action in action_set_i per bot 
+			for j in range(len(poses_i)):
+				prev_pos = poses_i[j]
+				next_pos = poses_ip1[j]
+				action = self.transition_to_action(prev_pos, next_pos)
+				action_set_i.append(action)
+			actions.append(action_set_i)
+		return actions
 
 	def play_round(self, pursuer_moves, pacman_move, pacman_second_move=None):
 		"""
@@ -588,7 +619,7 @@ class Environment:
 				randx = np.random.randint(0, high=sizex)
 				randy = np.random.randint(0, high=sizey)
 			self.move(i, [randx, randy])
-		self.history = []
+		self.reset_history()
 	
 	def get_batch(self, bot=-1, N=8 ):
 		"""
@@ -604,23 +635,44 @@ class Environment:
 			self.rand_initialise()
 			state = self.get_state_channels(bot=bot)
 			states.append( state )
-			reward = self.get_reward(state)
+			reward = self.immediate_reward(state)
 			rewards.append(reward)
 		return states, rewards
 
-	def get_simulation_history(self, algorithm="bs1", bot=-1, N=10, subsample=0):
+	def transition_to_action(self, prev_pos, next_pos):
 		"""
-		Simulate N rounds of a game with current initial conditions. return history of state, reward
+		given previous and next position, return which action taken (0, 1, 2, 3, -1)
+		-1 iff prev = next
+		"""
+		adjacent = self.adjacent(prev_pos)
+		action = -1
+		for i in range(len(adjacent)):
+			if self.dist(next_pos, adjacent[i]) == 0:
+				action = i # if next and adjacent are the same, set action
+		return action
+
+	def action_to_transition(self, num, start_pos):
+		"""
+		given a number, outputs the new location from start position
+		0^ 1> 2v 3<
+		"""
+		adjacent_locs =  self.adjacent(start_pos)
+		return adjacent_locs[num]		
+
+	def get_simulation_history(self, algorithm="bs1", bot=-1, epsilon=0.1, N=10, subsample=0):
+		"""
+		Simulate N rounds of a game with random initial conditions. return history of state, reward, action
 		states are all with respect to a specific bot. If subsample != 0, takes every subsample sample.
 		WLOG 
 		bot = -1 -> pacman
 		bot = 1 -> pursuers 
 		"""
+		self.rand_initialise()
 		states = []
 		rewards = []
 		state = self.get_state_channels(bot=bot)
 		states.append( state )
-		reward = self.get_reward(state)
+		reward = self.immediate_reward(state)
 		rewards.append(reward)
 		discount_factor = 0.95 # TODO: check this
 		current_discount = discount_factor
@@ -631,15 +683,19 @@ class Environment:
 				self.baseline_motion() #TODO: add more algorithms
 			state = self.get_state_channels(bot=bot)
 			states.append( state )
-			current_discount *= discount_factor
-			reward = self.get_reward(state)*current_discount
+			reward = self.immediate_reward(state)
 			rewards.append(reward)
+		rewards = self.immediate_reward_to_total(rewards, discount_factor)
+		actions = self.history_to_actions() #actions = list of actions from (i->i+1)
+		states = states[:-1]  #exclude last state, since we dont have action for last state
+		rewards = rewards[1:]  #exclude reward for start state, since we only want rewards on state i+1 given action i->i+1
 		#TODO: maybe randomly subsample instead of every nth ?
 		if subsample >= 1:
 			step = int(subsample)
-			states = states[0::step]
-			rewards = rewards[0::step]
-		return states, rewards
+			states = states[::step] 
+			rewards = rewards[::step] 
+			actions = actions[::step] 
+		return states, rewards, actions
 			
 
 
