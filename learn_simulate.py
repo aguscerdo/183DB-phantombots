@@ -4,6 +4,7 @@ import numpy as np
 from game import Game
 
 
+
 def main():
 	epochs = 100
 	sim_per_epoch = 100
@@ -19,10 +20,17 @@ def main():
 	print(states.shape)
 	print(rewards.shape)
 	print(actions.shape)
-	for i in range(batch_size):
+	transposed_states = np.transpose(states, axes=(0,2,3,1))
+	print(transposed_states.shape)
+	"""for i in range(batch_size):
 		trial_states, trial_rewards, trial_actions = game.get_simulation_history(bot=1, N=steps_per_run, subsample=subsample)
 		states = np.concatenate((states, trial_states), axis=0)
 		rewards = np.concatenate((rewards, trial_rewards), axis=0)
 		actions = np.concatenate((actions, trial_actions), axis=0)
-	
+	"""
+	transposed_states = np.transpose(states, axes=(0,2,3,1))
+	m = MultiAgentCNN()
+	m.train(transposed_states, rewards, actions, save=False)
+
+
 main()

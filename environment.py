@@ -345,7 +345,6 @@ class Environment:
 			state.append(phantom_state)
 			state.append(pac_state)
 		#convert from 4,11,11 to 11,11,4
-		np.swapaxes(state, 0, -1)
 		return state
 		
 	def immediate_loss(self, bot=-1, state=None):
