@@ -150,7 +150,7 @@ class Environment:
 		start_pos = self.bots[bot].get_position()
 		# True if dist == 1 and both vertices in set and no collision
 		valid_move = True
-		valid_move &= (self.dist(start_pos, end_pos) == 1)
+		valid_move &= (self.dist(start_pos, end_pos) <= 1)
 		#check if points are even valid
 		valid_move &= (end_pos[0] < self.size[0] and end_pos[1] < self.size[1])
 		valid_move &= (end_pos[0] >= 0 and end_pos[1] >= 0)
@@ -187,7 +187,7 @@ class Environment:
 		valid_move &= (start_pos[0] >= 0 and start_pos[1] >= 0)
 		if valid_move == False:
 			return valid_move
-		valid_move &= (self.dist(start_pos, end_pos) == 1)
+		valid_move &= (self.dist(start_pos, end_pos) <= 1)
 		valid_move &= (self.verticeMatrix[end_pos[0], end_pos[1]] == 1)
 		valid_move &= (self.verticeMatrix[start_pos[0], start_pos[1]] == 1)
 		# check collisions, TODO maybe change this(?)
@@ -231,7 +231,7 @@ class Environment:
 		valid_move &= (start_pos[0] >= 0 and start_pos[1] >= 0)
 		if valid_move == False:
 			return valid_move
-		valid_move &= (self.dist(start_pos, end_pos) == 1)
+		valid_move &= (self.dist(start_pos, end_pos) <= 1)
 		valid_move &= (self.verticeMatrix[end_pos[0], end_pos[1]] == 1)
 		valid_move &= (self.verticeMatrix[start_pos[0], start_pos[1]] == 1)
 		# check collisions, TODO maybe change this(?)
@@ -344,6 +344,8 @@ class Environment:
 		else:
 			state.append(phantom_state)
 			state.append(pac_state)
+		#convert from 4,11,11 to 11,11,4
+		np.swapaxes(state, 0, -1)
 		return state
 		
 	def immediate_loss(self, bot=-1, state=None):
@@ -353,7 +355,6 @@ class Environment:
 		"""
 		Gets the immediate reward from target state, if state is None uses current state
 		"""
-		print("getting reward with bot = " + str(bot))
 		if state is None:
 			state = self.get_state_channels(bot=bot)
 		pacman = (bot == -1) or (bot >= len(self.bots)-1)
@@ -602,29 +603,12 @@ class Environment:
 		for i in range(len(self.bots)):
 			randx = np.random.randint(0, high=sizex)
 			randy = np.random.randint(0, high=sizey)
-			while [randx, randy] in self.occupiedVertices:
+			while [randx, randy] in self.occupiedVertices or self.verticeMatrix[randx, randy] == 0:
 				randx = np.random.randint(0, high=sizex)
 				randy = np.random.randint(0, high=sizey)
 			self.move(i, [randx, randy])
 		self.reset_history()
 	
-	def get_batch(self, bot=-1, N=8 ):
-		"""
-		returns batch of states, rewards
-		states are all with respect to a specific bot. N = batch size
-		WLOG 
-		bot = -1 -> pacman
-		bot = 1 -> pursuers
-		"""
-		states = []
-		rewards = []
-		for i in range(N):
-			self.rand_initialise()
-			state = self.get_state_channels(bot=bot)
-			states.append( state )
-			reward = self.immediate_reward(state)
-			rewards.append(reward)
-		return states, rewards
 
 	def transition_to_action(self, prev_pos, next_pos):
 		"""
@@ -646,45 +630,12 @@ class Environment:
 		adjacent_locs =  self.adjacent(start_pos)
 		return adjacent_locs[num]		
 
-	def get_simulation_history(self, algorithm="bs1", bot=-1, N=10, subsample=0):
-		"""
-		Simulate N rounds of a game with random initial conditions. return history of state, reward, action
-		states are all with respect to a specific bot. If subsample != 0, takes every subsample sample.
-		WLOG 
-		bot = -1 -> pacman
-		bot = 1 -> pursuers 
-		"""
-		self.rand_initialise()
-		states = []
-		rewards = []
-		state = self.get_state_channels(bot=bot)
-		states.append( state )
-		reward = self.immediate_reward(bot=bot, state=state)
-		rewards.append(reward)
-		discount_factor = 0.95 # TODO: check this
-		current_discount = discount_factor
-		for i in range(N):
-			if algorithm in "bs1":
-				self.baseline_motion()
-			else:
-				self.baseline_motion() #TODO: add more algorithms
-			state = self.get_state_channels(bot=bot)
-			states.append( state )
-			reward = self.immediate_reward(state)
-			rewards.append(reward)
-		rewards = self.immediate_reward_to_total(rewards, discount_factor)
-		actions = self.history_to_actions() #actions = list of actions from (i->i+1)
-		states = states[:-1]  #exclude last state, since we dont have action for last state
-		rewards = rewards[1:]  #exclude reward for start state, since we only want rewards on state i+1 given action i->i+1
-		#TODO: maybe randomly subsample instead of every nth ?
-		if subsample >= 1:
-			step = int(subsample)
-			states = states[::step] 
-			rewards = rewards[::step] 
-			actions = actions[::step] 
-		return states, rewards, actions
-		
-		
+	def get_all_positions(self):
+		positions = []
+		for bot in self.bots:
+			pos = bot.get_position()
+			positions.append(pos)
+		return positions
 
 
 			
