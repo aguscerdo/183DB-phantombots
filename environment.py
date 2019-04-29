@@ -18,7 +18,7 @@ import numpy as np
 from phantomBot import PhantomBot
 import csv
 import baseline1 as bs1
-
+import time
 import itertools
 
 
@@ -531,7 +531,7 @@ class Environment:
 			ax.set_title("Step {}".format(i))
 		
 		anim = FuncAnimation(fig, update, frames=history.shape[1], interval=115)
-		anim.save('the_movie.mp4', writer='ffmpeg')
+		anim.save('{}.mp4'.format(time.time()), writer='ffmpeg')
 	
 	
 	def first_motion(self):
