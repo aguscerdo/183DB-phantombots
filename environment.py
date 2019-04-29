@@ -10,6 +10,8 @@ use play_round. If it returns false, then your moves were illegal and nothing wo
 If there is supposed to be a double_move for pacman, input it in play_round.
 Examples on how to move are below (first_motion, psuedo_rand_motion)
 """
+import matplotlib
+matplotlib.use('TkAgg')
 import matplotlib.pyplot as plt
 from matplotlib.animation import FuncAnimation
 import numpy as np
@@ -351,6 +353,7 @@ class Environment:
 		"""
 		Gets the immediate reward from target state, if state is None uses current state
 		"""
+		print("getting reward with bot = " + str(bot))
 		if state is None:
 			state = self.get_state_channels(bot=bot)
 		pacman = (bot == -1) or (bot >= len(self.bots)-1)
@@ -594,25 +597,9 @@ class Environment:
 		print("err :( curr > randmax")
 		return False # we did not move
 		
-	def baseline_motion(self):
-		pursuer_pos = []
-		evader = self.bots[-1]
-		evader_pos = evader.get_position()
-		evader_second_move = None
-		for i in range(0, len(self.bots)-1):
-			pursuer_pos.append(self.bots[i].get_position())
-		pursuer_moves = self.bs1.pursuerAlg(pursuer_pos)
-		evader_move = self.bs1.evaderAlg(evader_pos)
-		if evader.double_move():
-			evader_second_move = self.bs1.evaderAlg((evader.get_position()))
-		if self.play_round(pursuer_moves, evader_move, evader_second_move):
-			return True	#we moved!
-		print ("err!!")
-		return False
-
 	def rand_initialise(self):
 		sizex, sizey = self.size
-		for i in range(len(bots)):
+		for i in range(len(self.bots)):
 			randx = np.random.randint(0, high=sizex)
 			randy = np.random.randint(0, high=sizey)
 			while [randx, randy] in self.occupiedVertices:
@@ -659,7 +646,7 @@ class Environment:
 		adjacent_locs =  self.adjacent(start_pos)
 		return adjacent_locs[num]		
 
-	def get_simulation_history(self, algorithm="bs1", bot=-1, epsilon=0.1, N=10, subsample=0):
+	def get_simulation_history(self, algorithm="bs1", bot=-1, N=10, subsample=0):
 		"""
 		Simulate N rounds of a game with random initial conditions. return history of state, reward, action
 		states are all with respect to a specific bot. If subsample != 0, takes every subsample sample.
@@ -672,7 +659,7 @@ class Environment:
 		rewards = []
 		state = self.get_state_channels(bot=bot)
 		states.append( state )
-		reward = self.immediate_reward(state)
+		reward = self.immediate_reward(bot=bot, state=state)
 		rewards.append(reward)
 		discount_factor = 0.95 # TODO: check this
 		current_discount = discount_factor
@@ -696,6 +683,7 @@ class Environment:
 			rewards = rewards[::step] 
 			actions = actions[::step] 
 		return states, rewards, actions
+		
 			
 
 
