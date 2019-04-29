@@ -103,6 +103,7 @@ class MultiAgentCNN:
 			              self.epsilon: epsilon
 		              })
 		return out
+	
 		
 	
 if __name__ == '__main__':
