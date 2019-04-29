@@ -125,3 +125,4 @@ dmypy.json
 summary/
 .idea/
 weights/
+*.mp4

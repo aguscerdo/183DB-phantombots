@@ -20,18 +20,22 @@ class MultiAgentCNN:
 		self.images = tf.placeholder(tf.float32, shape=(None, 11, 11, 4), name='in_image')
 		
 		self.epsilon = tf.placeholder(tf.float32, (1,))
-		cnn0 = tf.layers.conv2d(inputs=self.images, filters=32,
+		nn = tf.layers.conv2d(inputs=self.images, filters=32,
 		                        kernel_size=[3, 3], padding='same',
 		                        activation='relu')
 		
-		with tf.variable_scope('residual_1'):
-			res1 = self.residual_layer(cnn0)
-		with tf.variable_scope('residual_2'):
-			res2 = self.residual_layer(res1)
-			
+		# with tf.variable_scope('residual_1'):
+		# 	nn = self.residual_layer(nn)
+		# with tf.variable_scope('residual_2'):
+		# 	nn = self.residual_layer(nn)
+		
+		with tf.variable_scope('inception_1'):
+			nn = self.inception_layer(nn, True)
+		with tf.variable_scope('inception_2'):
+			nn = self.inception_layer(nn, True)
 		
 		with tf.variable_scope('fully_connected'):
-			flat = tf.layers.flatten(res2)
+			flat = tf.layers.flatten(nn)
 			nn1 = tf.layers.Dense(64, activation='relu')(flat)
 			drop1 = tf.layers.Dropout(0.2)(nn1)
 			batchnorm = tf.layers.batch_normalization(drop1)
@@ -67,6 +71,53 @@ class MultiAgentCNN:
 		concat = tf.concat([layer_in, cnn2], axis=-1)
 		return tf.layers.max_pooling2d(concat, [2, 2], [2, 2])
 	
+	
+	@staticmethod
+	def __inception_layer_helper(layer_in):
+		# 1x1
+		cnn11 = tf.layers.conv2d(inputs=layer_in, filters=64,
+	                        kernel_size=[1, 1], padding='same',
+	                        activation='relu')
+			
+		# 2x2
+		cnn12 = tf.layers.conv2d(inputs=layer_in, filters=256,
+	                        kernel_size=[1, 1], padding='same',
+	                        activation='relu')
+		
+		cnn22 = tf.layers.conv2d(inputs=cnn12, filters=256,
+		                        kernel_size=[2, 2], padding='same',
+		                        activation='relu')
+
+		# 3x3
+		cnn13 = tf.layers.conv2d(inputs=layer_in, filters=256,
+	                        kernel_size=[1, 1], padding='same',
+	                        activation='relu')
+		
+		cnn23 = tf.layers.conv2d(inputs=cnn13, filters=64,
+		                        kernel_size=[3, 3], padding='same',
+		                        activation='relu')
+			
+		
+		# Concat
+		concat = tf.concat([cnn11, cnn22, cnn23], axis=-1)
+		out = tf.layers.conv2d(inputs=concat, filters=64,
+		                        kernel_size=[1, 1], padding='same',
+		                        activation='relu')
+		
+		return out
+	
+	
+	def inception_layer(self, layer_in, residual=False):
+		with tf.variable_scope('inception1'):
+			nn = self.__inception_layer_helper(layer_in)
+		with tf.variable_scope('inception2'):
+			nn = self.__inception_layer_helper(nn)
+		
+		if residual:
+			nn = tf.concat([layer_in, nn], axis=-1)
+		
+		return tf.layers.max_pooling2d(nn, [2, 2], [2, 2])
+		
 	
 	def train(self, tensor_list, reward_list, actions_list, save=False):
 		images = np.asarray(tensor_list)
@@ -146,14 +197,14 @@ if __name__ == '__main__':
 	# 	]
 	# ]
 	
-	for i in range(10):
-		batch_in = np.random.randint(0, 1, size=(1, 11, 11, 4))
-	
+	batch_in = np.random.randint(0, 1, size=(1, 11, 11, 4))
+
 	reward = [-3.4351]
 	action = [1]
 	
 	# out = m.predict(batch_in, 0.3)
 	m.train(batch_in, reward, action, save=True)
+
 	m.load()
 
 	
