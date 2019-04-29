@@ -2,6 +2,7 @@ import matplotlib
 import numpy as np
 import environment
 
+
 # class BS1:
 #     def __init__(self, env):
 #         self.env = env
@@ -61,7 +62,7 @@ import environment
 #     if evader.double_move():
 #         evader_second_move = self.bs1.evaderAlg((evader.get_position()))
 #     if self.play_round(pursuer_moves, evader_move, evader_second_move):
-#         return True	#we moved!
+#         return True    #we moved!
 #     print ("err!!")
 #     return False
 
@@ -77,6 +78,7 @@ class BaseLine:
         
         target = self.env.bots[-1]
         pos = target.get_position()
+        prev_pos = pos
         
         adj = [spot for spot in self.env.adjacent(pos) if self.env.legal_move_pos(pos, spot)]
         listOfDistances = []
@@ -105,9 +107,12 @@ class BaseLine:
                 listOfDistances.append(perSpot)
     
             minDistances = [min(item) for item in listOfDistances]
-            max_d = np.argmax(minDistances)
-            max_d = max_d if not isinstance(max_d, np.ndarray) else max_d[0]
-            move2 = adj[max_d]
+            if len(minDistances) == 0:
+                move2 = prev_pos # move back 
+            else:
+                max_d = np.argmax(minDistances)
+                max_d = max_d if not isinstance(max_d, np.ndarray) else max_d[0]
+                move2 = adj[max_d]
             
         return move1, move2
     
@@ -118,12 +123,14 @@ class BaseLine:
             pos = self.env.bots[i].get_position()
     
             adj = [spot for spot in self.env.adjacent(pos) if self.env.legal_move_pos(pos, spot)]
-            
-            d = [(self.env.dist(spot, self.env.bots[-1].get_position())) for spot in adj]
-            min_d = np.argmin(d)
-            min_d = min_d if isinstance(min_d, np.int64) else min_d[0]
+            if len(adj) == 0: # stay!
+                moves.append(pos)
+            else:
+                d = [(self.env.dist(spot, self.env.bots[-1].get_position())) for spot in adj]
+                min_d = np.argmin(d)
+                min_d = min_d if isinstance(min_d, np.int64) else min_d[0]
 
-            moves.append(adj[min_d])
+                moves.append(adj[min_d])
 
         return moves
 
@@ -135,3 +142,4 @@ class BaseLine:
         ok = self.env.play_round(pursuer_moves, target_move1, target_move2)
         if not ok:
             raise ValueError("Failed to play round: {} -- {} -- {}".format(pursuer_moves, target_move1, target_move2))
+        return pursuer_moves, target_move1, target_move2
