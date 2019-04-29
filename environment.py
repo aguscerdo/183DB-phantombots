@@ -594,25 +594,10 @@ class Environment:
 		print("err :( curr > randmax")
 		return False # we did not move
 		
-	def baseline_motion(self):
-		pursuer_pos = []
-		evader = self.bots[-1]
-		evader_pos = evader.get_position()
-		evader_second_move = None
-		for i in range(0, len(self.bots)-1):
-			pursuer_pos.append(self.bots[i].get_position())
-		pursuer_moves = self.bs1.pursuerAlg(pursuer_pos)
-		evader_move = self.bs1.evaderAlg(evader_pos)
-		if evader.double_move():
-			evader_second_move = self.bs1.evaderAlg((evader.get_position()))
-		if self.play_round(pursuer_moves, evader_move, evader_second_move):
-			return True	#we moved!
-		print ("err!!")
-		return False
 
 	def rand_initialise(self):
 		sizex, sizey = self.size
-		for i in range(len(bots)):
+		for i in range(len(self.bots)):
 			randx = np.random.randint(0, high=sizex)
 			randy = np.random.randint(0, high=sizey)
 			while [randx, randy] in self.occupiedVertices:

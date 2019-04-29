@@ -68,11 +68,11 @@ class MultiAgentCNN:
 		return tf.layers.max_pooling2d(concat, [2, 2], [2, 2])
 	
 	
-	def train(self, tensor_list, reward_list, actions_list, epsilon, save=False):
+	def train(self, tensor_list, reward_list, actions_list, save=False):
 		images = np.asarray(tensor_list)
 		rewards = np.asarray(reward_list).reshape(-1, 1)
 		actions = np.asarray(actions_list).reshape(-1, 1)
-		epsilon = np.array(epsilon).reshape((1,))
+		epsilon = np.array(0).reshape((1,))
 		
 		for i in range(5):
 			self.sess.run(self.opt,
@@ -85,12 +85,16 @@ class MultiAgentCNN:
 		
 		if save:
 			saver = tf.train.Saver()
-			path = '{}/{}.cpkt'.format(self.path, time.time())
-			out_path = saver.save(self.sess, path)
+			path = '{}/{}'.format(self.path, time.time())
+			os.mkdir(path)
+			out_path = saver.save(self.sess, path + '/model.cpkt')
 			print('Saved to {}'.format(out_path))
+			
+			writer = tf.summary.FileWriter('./summary', m.sess.graph)
+			writer.flush()
 
 
-	def predict(self, tensor_in, epsilon):
+	def predict(self, tensor_in, epsilon=0):
 		tensor = np.asarray(tensor_in)
 		if len(tensor.shape) == 3:
 			tensor = tensor.reshape((1, -3, -2, -1))
@@ -105,38 +109,51 @@ class MultiAgentCNN:
 		return out
 	
 		
+	def load(self, path=None):
+		if path is None:
+			ldir = [l for l in os.listdir(self.path) if l[0] != '.']
+			ldir.sort(reverse=True)
+			path = ldir[0]
+		
+		saver = tf.train.Saver()
+		saver.restore(self.sess, '{}/{}/model.cpkt'.format(self.path, path))
+		print("Restored model at: {}".format(path))
+	
 	
 if __name__ == '__main__':
 	pass
 	
 	m = MultiAgentCNN()
 	
-	batch_in = [
-		[
-			[[1, 0, 0, 0],
-			 [0, 0, 0, 0],
-			 [0, 0, 0, 0],
-			 [0, 0, 0, 0]],
-			[[1, 0, 1, 0],
-			 [1, 0, 0, 0],
-			 [0, 0, 0, 0],
-			 [0, 0, 0, 0]],
-			[[0, 0, 0, 0],
-			 [0, 0, 0, 0],
-			 [0, 1, 0, 0],
-			 [0, 0, 0, 0]],
-			[[1, 0, 0, 0],
-			 [1, 0, 0, 0],
-			 [1, 1, 1, 0],
-			 [0, 0, 0, 0]]
-		]
-	]
+	# batch_in = [
+	# 	[
+	# 		[[1, 0, 0, 0],
+	# 		 [0, 0, 0, 0],
+	# 		 [0, 0, 0, 0],
+	# 		 [0, 0, 0, 0]],
+	# 		[[1, 0, 1, 0],
+	# 		 [1, 0, 0, 0],
+	# 		 [0, 0, 0, 0],
+	# 		 [0, 0, 0, 0]],
+	# 		[[0, 0, 0, 0],
+	# 		 [0, 0, 0, 0],
+	# 		 [0, 1, 0, 0],
+	# 		 [0, 0, 0, 0]],
+	# 		[[1, 0, 0, 0],
+	# 		 [1, 0, 0, 0],
+	# 		 [1, 1, 1, 0],
+	# 		 [0, 0, 0, 0]]
+	# 	]
+	# ]
+	
+	for i in range(10):
+		batch_in = np.random.randint(0, 1, size=(1, 11, 11, 4))
 	
 	reward = [-3.4351]
 	action = [1]
 	
 	# out = m.predict(batch_in, 0.3)
-	# m.train(batch_in, reward, action, 0.2)
-	writer = tf.summary.FileWriter('./summary', m.sess.graph)
-	writer.flush()
+	m.train(batch_in, reward, action, save=True)
+	m.load()
+
 	
