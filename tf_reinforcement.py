@@ -17,7 +17,7 @@ class MultiAgentCNN:
 		
 	
 	def build_network(self):
-		self.images = tf.placeholder(tf.float32, shape=(None, 11, 11, 5), name='in_image')
+		self.images = tf.placeholder(tf.float32, shape=(None, 11, 11, 4), name='in_image')
 		
 		self.epsilon = tf.placeholder(tf.float32, (1,))
 		nn = tf.layers.conv2d(inputs=self.images, filters=32,
@@ -57,6 +57,7 @@ class MultiAgentCNN:
 			#self.MSE(self.reward_in, self.gathered_rewards)
 		
 		self.opt = tf.train.AdamOptimizer().minimize(self.loss)
+		tf.summary.scalar('loss', self.loss)
 		
 	
 	def MSE(self, y_true, y_pred):
@@ -148,14 +149,7 @@ class MultiAgentCNN:
 			              })
 		
 		if save:
-			saver = tf.train.Saver()
-			path = '{}/{}'.format(self.path, time.time())
-			os.mkdir(path)
-			out_path = saver.save(self.sess, path + '/model.cpkt')
-			print('Saved to {}'.format(out_path))
-			
-			writer = tf.summary.FileWriter('./summary', self.sess.graph)
-			writer.flush()
+			self.save()
 		
 		return self.sess.run(self.loss,
 		                     feed_dict={
@@ -166,6 +160,16 @@ class MultiAgentCNN:
 			              })
 		
 
+	def save(self):
+		saver = tf.train.Saver()
+		path = '{}/{}'.format(self.path, time.time())
+		os.mkdir(path)
+		out_path = saver.save(self.sess, path + '/model.cpkt')
+		print('Saved to {}'.format(out_path))
+		
+		writer = tf.summary.FileWriter('./summary', self.sess.graph)
+		writer.flush()
+		
 
 	def predict(self, tensor_in, epsilon=0):
 		tensor = np.asarray(tensor_in)
@@ -219,7 +223,7 @@ if __name__ == '__main__':
 	# 	]
 	# ]
 	
-	batch_in = np.random.randint(0, 1, size=(1, 11, 11, 5))
+	batch_in = np.random.randint(0, 1, size=(1, 11, 11, 4))
 
 	reward = [[-3.4351]]
 	action = [1]
