@@ -52,9 +52,19 @@ class MultiAgentCNN:
 		
 		self.gathered_rewards = tf.gather(self.predicted_reward, self.action_in, axis=1)
 		
-		self.loss = tf.reduce_mean((self.gathered_rewards - self.reward_in) ** 2, name='loss')
+		self.loss = self.MSE(self.reward_in, self.gathered_rewards)
 		self.opt = tf.train.AdamOptimizer().minimize(self.loss)
 		
+	
+	def MSE(self, y_true, y_pred):
+		return tf.reduce_mean((y_true - y_pred) ** 2, name='loss')
+	
+	
+	def cross_entropy(self, y_true, y_pred):
+		with tf.variable_scope('cross_entropy'):
+			one_hot = tf.one_hot(y_true, 5)
+			return tf.losses.softmax_cross_entropy(one_hot, y_pred)
+	
 	
 	@staticmethod
 	def residual_layer(layer_in):

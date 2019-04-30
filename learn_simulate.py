@@ -33,9 +33,11 @@ def main():
 		states = np.concatenate(states)
 		rewards = np.concatenate(rewards)
 		actions = np.concatenate(actions)
+		print(rewards)
 		
 		loss = m.train(states, rewards, actions, save=(e % 10 == 0))
 		print('\tLoss: {}'.format(loss))
+		break
 		
 		
 if __name__ == '__main__':
