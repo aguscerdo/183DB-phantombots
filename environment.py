@@ -361,7 +361,7 @@ class Environment:
 		pursuer_reward = 0
 		env_state, self_state, ally_state, enemy_state = state
 		# if collision between pursuer and pacman, get reward
-		collision_matrix = np.equal(ally_state, enemy_state)
+		collision_matrix = np.multiply(ally_state, enemy_state)
 		pursuer_reward += np.sum(collision_matrix)
 		# if collision between allies and environment, get negative reward
 		# if collision between enemies and environment, get positive reward
@@ -375,7 +375,6 @@ class Environment:
 		bot_reward += -np.sum(collision_matrix)*1000
 		collision_matrix = np.equal(walls, enemy_state)
 		bot_reward += np.sum(collision_matrix)*100
-
 		# reward for enemies is negative reward for pacman
 		if pacman:
 			return bot_reward - pursuer_reward

@@ -6,8 +6,8 @@ from game import Game
 
 
 def main():
-	epochs = 100
-	sim_per_epoch = 100
+	epochs = 2
+	sim_per_epoch = 1
 	game = Game()
 	batch_size = 10
 	steps_per_run = 100
@@ -35,10 +35,10 @@ def main():
 		actions = np.concatenate(actions)
 		print(rewards)
 		
-		loss = m.train(states, rewards, actions, save=(e % 10 == 0))
-		print('\tLoss: {}'.format(loss))
+		#loss = m.train(states, rewards, actions, save=(e % 10 == 0))
+		#print('\tLoss: {}'.format(loss))
 		break
-		
+	
 		
 if __name__ == '__main__':
 	main()
