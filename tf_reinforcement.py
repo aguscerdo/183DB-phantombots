@@ -17,7 +17,7 @@ class MultiAgentCNN:
 		
 	
 	def build_network(self):
-		self.images = tf.placeholder(tf.float32, shape=(None, 11, 11, 4), name='in_image')
+		self.images = tf.placeholder(tf.float32, shape=(None, 11, 11, 5), name='in_image')
 		
 		self.epsilon = tf.placeholder(tf.float32, (1,))
 		nn = tf.layers.conv2d(inputs=self.images, filters=32,
@@ -50,9 +50,12 @@ class MultiAgentCNN:
 		self.action_in = tf.placeholder(tf.int32, shape=(None, 1), name='action_in')
 		self.reward_in = tf.placeholder(tf.float32, shape=(None, 1), name='actual_rewards')
 		
-		self.gathered_rewards = tf.gather(self.predicted_reward, self.action_in, axis=1)
 		
-		self.loss = self.MSE(self.reward_in, self.gathered_rewards)
+		with tf.variable_scope('loss'):
+			self.gathered_rewards = tf.gather(self.predicted_reward, self.action_in, axis=1)[:, 0, :]
+			self.loss = tf.losses.mean_squared_error(self.reward_in,  self.gathered_rewards)
+			#self.MSE(self.reward_in, self.gathered_rewards)
+		
 		self.opt = tf.train.AdamOptimizer().minimize(self.loss)
 		
 	
@@ -134,7 +137,7 @@ class MultiAgentCNN:
 		rewards = np.asarray(reward_list).reshape(-1, 1)
 		actions = np.asarray(actions_list).reshape(-1, 1)
 		epsilon = np.array(0).reshape((1,))
-		
+
 		for i in range(5):
 			self.sess.run(self.opt,
 			              feed_dict={
@@ -216,14 +219,13 @@ if __name__ == '__main__':
 	# 	]
 	# ]
 	
-	batch_in = np.random.randint(0, 1, size=(1, 11, 11, 4))
+	batch_in = np.random.randint(0, 1, size=(1, 11, 11, 5))
 
-	reward = [-3.4351]
+	reward = [[-3.4351]]
 	action = [1]
 	
 	# out = m.predict(batch_in, 0.3)
 	m.train(batch_in, reward, action, save=True)
-
 	m.load()
 
 	
