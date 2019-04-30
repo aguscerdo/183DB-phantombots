@@ -143,3 +143,10 @@ class BaseLine:
         if not ok:
             raise ValueError("Failed to play round: {} -- {} -- {}".format(pursuer_moves, target_move1, target_move2))
         return pursuer_moves, target_move1, target_move2
+    
+    
+    def baseline_moves(self):
+        pursuer_moves = self.pursuer_move()
+        target_move1, target_move2 = self.target_move()
+        
+        return pursuer_moves, target_move1, target_move2

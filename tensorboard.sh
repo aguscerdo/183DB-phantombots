@@ -1,1 +1,1 @@
-tensorboard --logdir './summary'
+tensorboard --logdir './weights'

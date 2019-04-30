@@ -13,7 +13,7 @@ class MultiAgentCNN:
 		self.build_network()
 		self.sess = tf.Session()
 		self.sess.run(tf.global_variables_initializer())
-	
+		self.i = 0
 		
 	
 	def build_network(self):
@@ -139,7 +139,7 @@ class MultiAgentCNN:
 		actions = np.asarray(actions_list).reshape(-1, 1)
 		epsilon = np.array(0).reshape((1,))
 
-		for i in range(5):
+		for i in range(7):
 			self.sess.run(self.opt,
 			              feed_dict={
 				              self.images: images,
