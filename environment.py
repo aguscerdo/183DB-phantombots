@@ -437,7 +437,7 @@ class Environment:
 
 	def play_round(self, pursuer_moves, pacman_move, pacman_second_move=None):
 		"""
-		Plays one round, moving pursuers and pacman, if possible.
+		Plays one round, moving pursuers and pacman, if possible. 
 		Returns True if succesful, false if invalid
 		:param pursuer_moves: list of moves for each pursure, [[xi,yi]]
 		:param pacman_move: move for pacman [x, y]
@@ -472,6 +472,35 @@ class Environment:
 			self.move(-1, pacman_second_move)
 			self.update_history()
 		return True
+
+	def loss_condition(self):
+		"""
+		Return
+		 1 if pursuers crashed (with themselves or wall)
+		 2 if pacman crashed (with wall)
+		 0 if none of above
+		"""
+		num_pursuers = len(self.bots) - 1
+		# Pursuers check 
+		env_state, self_state, ally_state, enemy_state = self.get_state_channels(1)
+		walls = 1 + env_state
+		collision_matrix = np.equal(walls, ally_state)
+		collision = np.sum(collision_matrix)
+		if (collision > 0):
+			return 1 # pursuers collided with wall
+		
+		unique_squares = np.sum(ally_state)
+		if (unique_squares != num_pursuers):
+			return 1 # pursuers collided with themselves
+
+		# pacman check
+		collision_matrix = np.equal(walls, enemy_state)
+		collision = np.sum(collision_matrix)
+		if (collision > 0):
+			return 2 # pacman collided with wall
+		
+		return 0
+		
 
 	def win_condition(self):
 		"""
@@ -627,6 +656,8 @@ class Environment:
 		0^ 1> 2v 3<
 		"""
 		adjacent_locs =  self.adjacent(start_pos)
+		if num >= 4:
+			return start_pos
 		return adjacent_locs[num]		
 
 	def get_all_positions(self):
@@ -636,9 +667,11 @@ class Environment:
 			positions.append(pos)
 		return positions
 
-
-			
-
+	def play_round_no_checks(self):
+		"""
+		similar to play round but does not check if moves are illegal, 
+		instead checks if game is over		
+		"""
 
 	
 		
