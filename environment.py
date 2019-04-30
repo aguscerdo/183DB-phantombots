@@ -162,7 +162,8 @@ class Environment:
 		valid_move &= (self.verticeMatrix[start_pos[0], start_pos[1]] == 1)
 		# check collisions, TODO maybe change this(?)
 		for i in range(len(self.bots)):
-			valid_move &= (self.dist(end_pos, self.bots[i].get_position()) > 0)
+			if i != bot:
+				valid_move &= (self.dist(end_pos, self.bots[i].get_position()) > 0)
 		if (self.printAll):
 			print("Moving from " + str(start_pos) + " to " + str(end_pos) + " is: ")
 			if (valid_move):
@@ -531,7 +532,7 @@ class Environment:
 			ax.set_title("Step {}".format(i))
 		
 		anim = FuncAnimation(fig, update, frames=history.shape[1], interval=115)
-		anim.save('{}.mp4'.format(time.time()), writer='ffmpeg')
+		anim.save('animations/{}.mp4'.format(time.time()), writer='ffmpeg')
 	
 	
 	def first_motion(self):
@@ -615,7 +616,7 @@ class Environment:
 		-1 iff prev = next
 		"""
 		adjacent = self.adjacent(prev_pos)
-		action = -1
+		action = 4
 		for i in range(len(adjacent)):
 			if self.dist(next_pos, adjacent[i]) == 0:
 				action = i # if next and adjacent are the same, set action

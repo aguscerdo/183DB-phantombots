@@ -34,7 +34,6 @@ class Game:
 		discount_factor = 0.95 # TODO: check this
 		current_discount = discount_factor
 		for i in range(N):
-			print("running baseline with step = " + str(i))
 			if self.baseline.env.win_condition():
 				break
 			pursuer_moves, target_move1, target_move2 = self.baseline.baseline_step() # expected moves
@@ -49,13 +48,13 @@ class Game:
 			states.append( state )
 			reward = self.baseline.env.immediate_reward(bot=bot, state=state)
 			rewards.append(reward)
-			print("Moved! here is positions now: ")
-			if target_move2 is None:
-				print("PURSUERS: " + str(real_pursuer_moves))
-				print("PACMAN: " + str(real_pacman_move))
-			else:
-				print("PURSUERS: " + str(real_pursuer_moves))
-				print("PACMAN (DOUBLE MOVED): " + str(real_pacman_move))
+			# print("Moved! here is positions now: ")
+			# if target_move2 is None:
+			# 	print("PURSUERS: " + str(real_pursuer_moves))
+			# 	print("PACMAN: " + str(real_pacman_move))
+			# else:
+			# 	print("PURSUERS: " + str(real_pursuer_moves))
+			# 	print("PACMAN (DOUBLE MOVED): " + str(real_pacman_move))
 		rewards = self.baseline.env.immediate_reward_to_total(rewards, discount_factor)
 		
 		# get actions from moves:
@@ -91,8 +90,10 @@ class Game:
 			states = states[::step] 
 			rewards = rewards[::step] 
 			actions = actions[::step] 
-		# only track one bot, 
+		# only track one bot,
+		if len(actions) == 0:
+			return None, None, None
+
 		actions = np.array(actions)
 		actions = actions[:,bot]
-
 		return states, rewards, actions

@@ -39,12 +39,12 @@ class MultiAgentCNN:
 			nn1 = tf.layers.Dense(64, activation='relu')(flat)
 			drop1 = tf.layers.Dropout(0.2)(nn1)
 			batchnorm = tf.layers.batch_normalization(drop1)
-			self.predicted_reward = tf.layers.Dense(4)(batchnorm)
+			self.predicted_reward = tf.layers.Dense(5)(batchnorm)
 		
 		with tf.variable_scope('exploration'):
 			randy = tf.random.uniform((1, ))
 			self.action = tf.cond(tf.reduce_any(tf.less(self.epsilon, randy)),
-			              lambda: tf.cast(tf.random.uniform((1, ), 0, 4), dtype=tf.int64),
+			              lambda: tf.cast(tf.random.uniform((1, ), 0, 5), dtype=tf.int64),
 			              lambda: tf.argmax(self.predicted_reward))
 		
 		self.action_in = tf.placeholder(tf.int32, shape=(None, 1), name='action_in')
@@ -52,7 +52,7 @@ class MultiAgentCNN:
 		
 		self.gathered_rewards = tf.gather(self.predicted_reward, self.action_in, axis=1)
 		
-		self.loss = tf.reduce_sum((self.gathered_rewards - self.reward_in) ** 2, name='loss')
+		self.loss = tf.reduce_mean((self.gathered_rewards - self.reward_in) ** 2, name='loss')
 		self.opt = tf.train.AdamOptimizer().minimize(self.loss)
 		
 	
@@ -141,8 +141,17 @@ class MultiAgentCNN:
 			out_path = saver.save(self.sess, path + '/model.cpkt')
 			print('Saved to {}'.format(out_path))
 			
-			writer = tf.summary.FileWriter('./summary', m.sess.graph)
+			writer = tf.summary.FileWriter('./summary', self.sess.graph)
 			writer.flush()
+		
+		return self.sess.run(self.loss,
+		                     feed_dict={
+				              self.images: images,
+				              self.reward_in: rewards,
+				              self.action_in: actions,
+				              self.epsilon: epsilon
+			              })
+		
 
 
 	def predict(self, tensor_in, epsilon=0):
