@@ -37,7 +37,9 @@ class TfSimulator:
 			if bot_states.shape[1:] != (11, 11, 4):
 				bot_states = np.transpose(bot_states, axes=(0, 2, 3, 1))
 			predicted_movements = self.model.predict(bot_states, epsilon)
-			actions.append(predicted_movements[bot])
+			action_to_do = predicted_movements[bot]
+			action_to_do = action_to_do[0] if isinstance(action_to_do, np.ndarray) else action_to_do
+			actions.append(action_to_do)
 			
 			next_bot_state = [self.env.action_to_transition(predicted_movements[b], self.env.bots[b].get_position())
 			              for b in [0, 1, 2, 3]]
@@ -47,7 +49,7 @@ class TfSimulator:
 			rewards.append(self.env.immediate_reward(bot))
 			states.append(self.env.get_state_channels(bot))
 		
-		rewards = self.env.immediate_reward_to_total(rewards, 0.9)
+		rewards = self.env.immediate_reward_to_total(rewards, 0.5)
 		states = states[:-1]
 		rewards = rewards[1:]
 		

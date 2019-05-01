@@ -7,7 +7,7 @@ from tf_simulator import TfSimulator
 
 def main():
 	epochs = 15
-	sim_per_epoch = 25
+	sim_per_epoch = 5
 	game = Game()
 	batch_size = 10
 	steps_per_run = 30
@@ -33,9 +33,12 @@ def main():
 			else:
 				ml_simulator.reset()
 				s, r, a = ml_simulator.run_simulation(0, steps_per_run, subsample, epsilon)
-			
+				s = np.array(s)
+				r = np.array(r)
+				a = np.array(a)
 			if s is None:
 				continue
+			
 			states.append(s)
 			rewards.append(r)
 			actions.append(a)
