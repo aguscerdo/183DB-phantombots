@@ -387,7 +387,7 @@ class Environment:
 		total_rewards = np.copy(rewards)
 		#loop backwards from 2nd last el to last el
 		for i in range(len(total_rewards)-2, -1, -1):
-			total_rewards[i] += total_rewards[i+1]*discount_factor
+			total_rewards[i] = total_rewards[i]*discount_factor + (1-discount_factor)*total_rewards[i+1]
 		return total_rewards
 
 	def adjacent(self, pos):
@@ -667,11 +667,36 @@ class Environment:
 			positions.append(pos)
 		return positions
 
-	def play_round_no_checks(self):
+	def play_round_no_checks(self, pursuer_moves, pacman_move, pacman_second_move=None):
 		"""
 		similar to play round but does not check if moves are illegal, 
 		instead checks if game is over		
 		"""
+		if (self.win_condition()):
+			print("you've already won")
+			return False
+		L = self.loss_condition()
+		if (L > 0):
+			print("Game over! You crashed")
+			if L == 1:
+				print("pac crash")
+			else: 
+				print("pursuer crash")
+			return False
+
+		double_move = self.bots[-1].double_move()
+		# move
+		self.move(-1, pacman_move)
+		for i in range(len(self.bots)-1):
+			self.move(i, pursuer_moves[i]) 
+		self.update_history()
+		#if pacman can move again, move again
+		if double_move and pacman_second_move is None:
+			print("you had a second move and didn't use it!")
+		elif double_move:
+			self.move(-1, pacman_second_move)
+			self.update_history()
+		return True
 
 	
 		
