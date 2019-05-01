@@ -655,6 +655,8 @@ class Environment:
 		given a number, outputs the new location from start position
 		0^ 1> 2v 3<
 		"""
+		if isinstance(num, list) or isinstance(num, tuple) or isinstance(num, np.ndarray):
+			num = num[0]
 		adjacent_locs =  self.adjacent(start_pos)
 		if num >= 4:
 			return start_pos

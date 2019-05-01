@@ -44,8 +44,8 @@ class MultiAgentCNN:
 		with tf.variable_scope('exploration'):
 			randy = tf.random.uniform((1, ))
 			self.action = tf.cond(tf.reduce_any(tf.less(self.epsilon, randy)),
-			              lambda: tf.cast(tf.random.uniform((1, ), 0, 5), dtype=tf.int64),
-			              lambda: tf.argmax(self.predicted_reward))
+			              lambda: tf.cast(tf.random.uniform((tf.shape(self.predicted_reward)[0], 1), 0, 5), dtype=tf.int64),
+			              lambda: tf.argmax(self.predicted_reward, axis=1))
 		
 		self.action_in = tf.placeholder(tf.int32, shape=(None, 1), name='action_in')
 		self.reward_in = tf.placeholder(tf.float32, shape=(None, 1), name='actual_rewards')

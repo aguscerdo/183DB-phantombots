@@ -26,7 +26,7 @@ class Game:
 			moves =  [pacman_position]
 		else: # PURSUER CASE
 			pursuer_initial_positions =  initial_positions[0:-1:1] 
-			moves = [ pursuer_initial_positions ]
+			moves = [pursuer_initial_positions]
 		state = self.baseline.env.get_state_channels(bot=bot)
 		states.append( state )
 		reward = self.baseline.env.immediate_reward(bot=bot, state=state)

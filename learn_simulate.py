@@ -6,8 +6,8 @@ import matplotlib.pyplot as plt
 from tf_simulator import TfSimulator
 
 def main():
-	epochs = 2
-	sim_per_epoch = 50
+	epochs = 15
+	sim_per_epoch = 25
 	game = Game()
 	batch_size = 10
 	steps_per_run = 30
@@ -24,28 +24,29 @@ def main():
 		states = []
 		rewards = []
 		actions = []
-		epsilon *= 0.98
+		epsilon *= 0.9
 		
 		for sim in range(sim_per_epoch):
-			if epochs % 2:
+			if e % 2:
 				s, r, a = game.get_simulation_history(bot=1, N=steps_per_run, subsample=subsample)
+				# s = np.transpose(s, axes=(0, 2, 3, 1))
 			else:
 				ml_simulator.reset()
 				s, r, a = ml_simulator.run_simulation(0, steps_per_run, subsample, epsilon)
-				print(s.shape)
 			
 			if s is None:
 				continue
-
-			s0 = np.transpose(s, axes=(0, 2, 3, 1))
-			states.append(s0)
+			states.append(s)
 			rewards.append(r)
 			actions.append(a)
 		
-			states = np.concatenate(states)
-			rewards = np.concatenate(rewards)
-			actions = np.concatenate(actions)
-			
+		states = np.concatenate(states)
+		rewards = np.concatenate(rewards)
+		actions = np.concatenate(actions)
+		
+		if states.shape[1:] != (11, 11, 4):
+			states = states.transpose((0, 2, 3, 1))
+
 		loss = m.train(states, rewards, actions, save=(e % 10 == 0 and e > 0))
 		print('\tLoss: {}'.format(loss))
 		loss_history.append(loss)
