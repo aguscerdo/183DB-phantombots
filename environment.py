@@ -307,12 +307,18 @@ class Environment:
 
 	def move(self, bot, end_pos):
 		"""
-		Moves bot to location
+		Moves bot to location. Returns 0 if collide with outer wall, and keeps bot in place
+		Else returns 1
 		:param bot: which bot is moving, i
 		:param end_pos: where a bot will end, (x1, y1)
 		"""
-		self.bots[bot].move(end_pos)
-		self.occupiedVertices[bot] = end_pos
+		x, y = end_pos
+		if x < 0 or x >= self.size[0] or y < 0 or y >= self.size[1]:
+			return 0
+		else:
+			self.bots[bot].move(end_pos)
+			self.occupiedVertices[bot] = end_pos
+		return 1
 
 	def get_state_channels(self, bot=-1):
 		"""
@@ -672,33 +678,48 @@ class Environment:
 	def play_round_no_checks(self, pursuer_moves, pacman_move, pacman_second_move=None):
 		"""
 		similar to play round but does not check if moves are illegal, 
-		instead checks if game is over		
+		instead checks if game is over	
+		return:
+			status
+				False -> game over / win
+				True -> normal round
+			bot_crashes
+				one-hot list, bot_crashes[i] = 1 if i-bot went into outer wall
+			 
 		"""
+		out_of_bounds = 0
+		bot_crashes = np.zeros(len(self.bots))
 		if (self.win_condition()):
 			print("you've already won")
-			return False
+			return False, bot_crashes
 		L = self.loss_condition()
 		if (L > 0):
-			print("Game over! You crashed")
+			print("You crashed")
 			if L == 1:
 				print("pac crash")
-			else: 
+			elif L == 2: 
 				print("pursuer crash")
-			return False
+			#return False
 
 		double_move = self.bots[-1].double_move()
 		# move
-		self.move(-1, pacman_move)
+		out_of_bounds = 1 - self.move(-1, pacman_move)
+		if (out_of_bounds):
+			bot_crashes[-1] = 1
 		for i in range(len(self.bots)-1):
-			self.move(i, pursuer_moves[i]) 
+			out_of_bounds = 1 - self.move(i, pursuer_moves[i]) 
+			if (out_of_bounds):
+				bot_crashes[i] = 1
 		self.update_history()
 		#if pacman can move again, move again
 		if double_move and pacman_second_move is None:
 			print("you had a second move and didn't use it!")
 		elif double_move:
-			self.move(-1, pacman_second_move)
+			out_of_bounds = 1 - self.move(-1, pacman_second_move)
+			if (out_of_bounds):
+				bot_crashes[-1] = 1
 			self.update_history()
-		return True
+		return True, bot_crashes
 
 	
 		

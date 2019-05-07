@@ -44,9 +44,12 @@ class TfSimulator:
 			next_bot_state = [self.env.action_to_transition(predicted_movements[b], self.env.bots[b].get_position())
 			              for b in [0, 1, 2, 3]]
 			
-			ok = self.env.play_round(next_bot_state, target_move1, target_move2)
-			
-			rewards.append(self.env.immediate_reward(bot))
+			ok, bot_crashes = self.env.play_round_no_checks(next_bot_state, target_move1, target_move2)
+			# check if bot crashed, if it did then we give -reward, else give whatever it was supposed to get
+			if bot_crashes[bot]:
+				rewards.append(-100) 
+			else:	
+				rewards.append(self.env.immediate_reward(bot))
 			states.append(self.env.get_state_channels(bot))
 		
 		rewards = self.env.immediate_reward_to_total(rewards, 0.5)
@@ -64,10 +67,6 @@ class TfSimulator:
 		
 		return states, rewards, actions
 
-
-	def run_and_plot(self):
-		self.run_simulation(0, 1000)
-		self.env.animate()
 
 # if __name__ == '__main__':
 #
