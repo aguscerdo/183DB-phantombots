@@ -65,9 +65,9 @@ class TfSimulator:
 		return states, rewards, actions
 
 
-	def run_and_plot(self):
-		self.run_simulation(0, 1000)
-		self.env.animate()
+	def run_and_plot(self, dir, epoch):
+		self.run_simulation(0, 250)
+		self.env.animate(dir, epoch)
 
 # if __name__ == '__main__':
 #

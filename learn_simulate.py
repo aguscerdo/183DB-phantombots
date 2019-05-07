@@ -4,16 +4,24 @@ import numpy as np
 from game import Game
 import matplotlib.pyplot as plt
 from tf_simulator import TfSimulator
+import os
 
 def main():
-	epochs = 15
-	sim_per_epoch = 5
+	epochs = 1
+	sim_per_epoch = 3
 	game = Game()
 	batch_size = 10
-	steps_per_run = 30
-	subsample = 5
+	steps_per_run = 50
+	subsample = 4
 	m = MultiAgentCNN()
 	epsilon = 1
+	base_cap = 0.5
+	
+	run_dir = '{}_{}_{}_{}'.format(np.random.randint(1000000), epochs, sim_per_epoch, steps_per_run)
+	print('Saving to {}'.format(run_dir))
+	os.mkdir('animations/'+run_dir)
+	
+	decay = 5e-5
 	
 	ml_simulator = TfSimulator(m)
 	
@@ -24,10 +32,14 @@ def main():
 		states = []
 		rewards = []
 		actions = []
-		epsilon *= 0.9
+		
+		randy = np.random.uniform(0, 1)
 		
 		for sim in range(sim_per_epoch):
-			if e % 2:
+			base_cap *= (1 - decay)
+			epsilon *= (1 - decay)
+			
+			if randy < base_cap:
 				s, r, a = game.get_simulation_history(bot=1, N=steps_per_run, subsample=subsample)
 				# s = np.transpose(s, axes=(0, 2, 3, 1))
 			else:
@@ -59,7 +71,7 @@ def main():
 		loss_history.append(loss)
 	
 	m.save()
-	ml_simulator.run_and_plot()
+	ml_simulator.run_and_plot(run_dir, 'FINAL')
 	
 	plt.plot(np.arange(epochs), loss_history)
 	plt.title("Loss over epochs")

@@ -87,9 +87,13 @@ class Game:
 		#TODO: maybe randomly subsample instead of every nth ?
 		if subsample >= 1:
 			step = int(subsample)
-			states = states[::step] 
-			rewards = rewards[::step] 
-			actions = actions[::step] 
+			rand_arrange = np.arange(0, len(states))
+			np.random.shuffle(rand_arrange)
+			rand_arrange = rand_arrange[::step]
+			
+			states = np.array(states)[rand_arrange]
+			rewards = np.array(rewards)[rand_arrange]
+			actions = np.array(actions)[rand_arrange]
 		# only track one bot,
 		if len(actions) == 0:
 			return None, None, None

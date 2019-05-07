@@ -529,7 +529,7 @@ class Environment:
 		return np.abs(a[0] - b[0]) + np.abs(a[1] - b[1])
 
 
-	def animate(self):
+	def animate(self, out_dir=None, epoch=0):
 		"""
 		Animate the bot history
 		:return:
@@ -560,7 +560,8 @@ class Environment:
 			ax.set_title("Step {}".format(i))
 		
 		anim = FuncAnimation(fig, update, frames=history.shape[1], interval=115)
-		anim.save('animations/{}.mp4'.format(time.time()), writer='ffmpeg')
+		out = 'animations/{}/{}-{}.mp4'.format(out_dir, epoch, time.time())
+		anim.save(out, writer='ffmpeg')
 	
 	
 	def first_motion(self):
