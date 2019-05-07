@@ -11,7 +11,7 @@ If there is supposed to be a double_move for pacman, input it in play_round.
 Examples on how to move are below (first_motion, psuedo_rand_motion)
 """
 import matplotlib
-matplotlib.use('TkAgg')
+# matplotlib.use('TkAgg')
 import matplotlib.pyplot as plt
 from matplotlib.animation import FuncAnimation
 import numpy as np
@@ -660,7 +660,7 @@ class Environment:
 		adjacent_locs =  self.adjacent(start_pos)
 		if num >= 4:
 			return start_pos
-		return adjacent_locs[num]		
+		return adjacent_locs[num]
 
 	def get_all_positions(self):
 		positions = []

@@ -50,12 +50,16 @@ def main():
 		if states.shape[1:] != (11, 11, 4):
 			states = states.transpose((0, 2, 3, 1))
 
-		loss = m.train(states, rewards, actions, save=(e % 10 == 0 and e > 0))
+		save = (e % 10 == 0 and e > 0)
+		loss = m.train(states, rewards, actions, save=save)
+		# if save or len(ml_simulator.env.history) > 15:
+		# 	ml_simulator.env.animate()
+		#
 		print('\tLoss: {}'.format(loss))
 		loss_history.append(loss)
 	
 	m.save()
-	
+	ml_simulator.run_and_plot()
 	
 	plt.plot(np.arange(epochs), loss_history)
 	plt.title("Loss over epochs")
