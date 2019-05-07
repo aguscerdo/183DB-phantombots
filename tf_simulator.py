@@ -52,7 +52,7 @@ class TfSimulator:
 				rewards.append(self.env.immediate_reward(bot))
 			states.append(self.env.get_state_channels(bot))
 		
-		rewards = self.env.immediate_reward_to_total(rewards, 0.5)
+		rewards = self.env.immediate_reward_to_total(rewards, 0.95)
 		states = states[:-1]
 		rewards = rewards[1:]
 		

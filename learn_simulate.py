@@ -1,12 +1,14 @@
+import matplotlib
+matplotlib.use('TkAgg')
+import matplotlib.pyplot as plt
 from environment import Environment
 from tf_reinforcement import MultiAgentCNN
 import numpy as np
 from game import Game
-import matplotlib.pyplot as plt
 from tf_simulator import TfSimulator
 
 def main():
-	epochs = 15
+	epochs = 5
 	sim_per_epoch = 5
 	game = Game()
 	batch_size = 10
@@ -27,6 +29,7 @@ def main():
 		epsilon *= 0.9
 		
 		for sim in range(sim_per_epoch):
+			print("SIM: " + str(sim))
 			if e % 2:
 				s, r, a = game.get_simulation_history(bot=1, N=steps_per_run, subsample=subsample)
 				# s = np.transpose(s, axes=(0, 2, 3, 1))

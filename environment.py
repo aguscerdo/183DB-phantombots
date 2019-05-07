@@ -368,7 +368,7 @@ class Environment:
 		env_state, self_state, ally_state, enemy_state = state
 		# if collision between pursuer and pacman, get reward
 		collision_matrix = np.multiply(ally_state, enemy_state)
-		pursuer_reward += np.sum(collision_matrix)
+		pursuer_reward += np.sum(collision_matrix) * 10
 		# if collision between allies and environment, get negative reward
 		# if collision between enemies and environment, get positive reward
 		# env = 0 and ally/enemy = 1 => reward nonzero
@@ -393,7 +393,8 @@ class Environment:
 		total_rewards = np.copy(rewards)
 		#loop backwards from 2nd last el to last el
 		for i in range(len(total_rewards)-2, -1, -1):
-			total_rewards[i] = total_rewards[i]*discount_factor + (1-discount_factor)*total_rewards[i+1]
+			#total_rewards[i] = total_rewards[i]*discount_factor + (1-discount_factor)*total_rewards[i+1]
+			total_rewards[i] = total_rewards[i] + (discount_factor)*total_rewards[i+1]
 		return total_rewards
 
 	def adjacent(self, pos):
@@ -693,14 +694,14 @@ class Environment:
 			print("you've already won")
 			return False, bot_crashes
 		L = self.loss_condition()
-		if (L > 0):
+		"""if (L > 0):
 			print("You crashed")
 			if L == 1:
-				print("pac crash")
-			elif L == 2: 
 				print("pursuer crash")
+			elif L == 2: 
+				print("pac crash")
 			#return False
-
+		"""
 		double_move = self.bots[-1].double_move()
 		# move
 		out_of_bounds = 1 - self.move(-1, pacman_move)
