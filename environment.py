@@ -634,7 +634,16 @@ class Environment:
 		print("err :( curr > randmax")
 		return False # we did not move
 		
-	def rand_initialise(self):
+	def rand_initialise(self, preset=False):
+		if (preset):
+			self.move(0, [0,0])
+			self.move(1, [10,0])
+			self.move(2, [10,10])
+			self.move(3, [0,10])
+			self.move(-1, [6,6])
+			self.reset_history()
+			return
+		
 		sizex, sizey = self.size
 		for i in range(len(self.bots)):
 			randx = np.random.randint(0, high=sizex)
