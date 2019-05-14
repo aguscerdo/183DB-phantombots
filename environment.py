@@ -683,39 +683,26 @@ class Environment:
 		sizex, sizey = self.size
 		posx, posy = position
 		bottom_leftx,bottom_lefty = posx-radius,posy-radius
-		box = [ ]
+		diamond = [ ]
+		# get boundary 
 		if no_insides:
-			# bottom and top of box
 			for i in range(2*radius+1):
-				posx, posy = bottom_leftx+i, bottom_lefty
-				if (0 <= posx < sizex and 0 <= posy < sizey):
-					if  (self.dist([posx, posy], position) > 0 and self.verticeMatrix[posx, posy] == 1):
-						box.append([posx, posy])
-				posx, posy = bottom_leftx+i, bottom_lefty+2*radius
-				if (0 <= posx < sizex and 0 <= posy < sizey):
-					if  (self.dist([posx, posy], position) > 0 and self.verticeMatrix[posx, posy] == 1):
-						box.append([posx, posy])
-			#left and right of box
-			for i in range(1, 2*radius):
-				posx, posy = bottom_leftx, bottom_lefty+i
-				if (0 <= posx < sizex and 0 <= posy < sizey):
-					if  (self.dist([posx, posy], position) > 0 and self.verticeMatrix[posx, posy] == 1):
-						box.append([posx, posy])
-				posx, posy = bottom_leftx+2*radius, bottom_lefty+i
-				if (0 <= posx < sizex and 0 <= posy < sizey):
-					if  (self.dist([posx, posy], position) > 0 and self.verticeMatrix[posx, posy] == 1):
-						box.append([posx, posy])
-		if len(box) >= 2:
-			return box
+				for j in range(2*radius+1):
+					posx, posy = bottom_leftx+i, bottom_lefty+j
+					if (0 <= posx < sizex and 0 <= posy < sizey):
+						if  (self.dist([posx, posy], position) == radius and self.verticeMatrix[posx, posy] == 1):	
+							diamond.append([posx, posy])
+		if len(diamond) >= 2:
+			return diamond
 		
 		#get insides as well
 		for i in range(2*radius+1):
 			for j in range(2*radius+1):
 				posx, posy = bottom_leftx+i, bottom_lefty+j
 				if (0 <= posx < sizex and 0 <= posy < sizey):
-					if  (self.dist([posx, posy], position) > 0 and self.verticeMatrix[posx, posy] == 1 and [posx, posy] not in box):	
-						box.append([posx, posy])
-		return box
+					if  (0 < self.dist([posx, posy], position) <= radius and self.verticeMatrix[posx, posy] == 1):	
+						diamond.append([posx, posy])
+		return diamond
 
 
 	def rand_initialise_within_radius(self, radius, bots_in_radius, pacman_pos, bot_on_radius=False):
@@ -728,7 +715,7 @@ class Environment:
 		if bot_on_radius:
 			boundary = self.positions_in_radius(radius, pacman_pos, bot_on_radius)
 			randnum = np.random.randint(0, high=len(boundary))
-			self.move(i, boundary[randnum])
+			self.move(0, boundary[randnum])
 			taken.append(randnum)
 
 		box = self.positions_in_radius(radius, pacman_pos, no_insides=False)
@@ -835,3 +822,7 @@ class Environment:
 		for i in range(len(self.bots)):
 			self.move(i, self.starting_positions[i])
 		self.reset_history()
+
+env = Environment()
+env.rand_initialise_within_radius(3, 4, [0,0], 1)
+env.plot_grid()
