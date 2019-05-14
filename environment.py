@@ -466,12 +466,13 @@ class Environment:
 		:param pacman_second_move: second move for pacman (if it can move twice) [x, y]
 		:return: boolean
 		"""	
+		bot_crashes = np.zeros(len(self.bots))
 		if (self.win_condition()):
 			print("you've already won")
-			return False
+			return False, bot_crashes
 		double_move = self.bots[-1].double_move()
 		if double_move and pacman_second_move is None:
-			return False # pacman should move twice here 
+			return False, bot_crashes # pacman should move twice here 
 
 		#check if moves legal
 		legal = self.legal_move_all_pursuers(pursuer_moves)
@@ -480,7 +481,7 @@ class Environment:
 		if double_move:
 			legal &= self.legal_second_move_pacman(pacman_move, pacman_second_move)
 		if not legal:
-			return False
+			return False, bot_crashes
 		#it is legal, so now we can move
 		self.move(-1, pacman_move)
 		for i in range(len(self.bots)-1):
@@ -488,12 +489,13 @@ class Environment:
 				self.move(i, pursuer_moves[i]) # move
 			else:
 				self.move(i, self.bots[i].get_position()) #stay still
+				bot_crashes[i] = 1
 		self.update_history()
 		#if pacman can move again, move again
 		if  double_move:
 			self.move(-1, pacman_second_move)
 			self.update_history()
-		return True
+		return True, bot_crashes
 
 	def loss_condition(self):
 		"""
