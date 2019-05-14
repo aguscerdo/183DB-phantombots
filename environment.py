@@ -162,8 +162,8 @@ class Environment:
 			return valid_move
 		valid_move &= (self.verticeMatrix[end_pos[0], end_pos[1]] == 1)
 		valid_move &= (self.verticeMatrix[start_pos[0], start_pos[1]] == 1)
-		# check collisions, TODO maybe change this(?)
-		for i in range(len(self.bots)):
+		# check collisions, with pursuers
+		for i in range(len(self.bots)-1):
 			if i != bot:
 				valid_move &= (self.dist(end_pos, self.bots[i].get_position()) > 0)
 		if (self.printAll):
