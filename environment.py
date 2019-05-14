@@ -71,6 +71,7 @@ class Environment:
 			self.history.append([bot.get_position()])
 		
 		self.reward_win = 100
+		self.starting_positions = [ bot.get_position() for bot in self.bots ]
 		
 
 	def set_vertice_matrix(self):
@@ -435,7 +436,7 @@ class Environment:
 		self.history = []
 		for bot in self.bots:
 			self.history.append([bot.get_position()])
-
+		self.starting_positions =[ bot.get_position() for bot in self.bots ]
 
 	def history_to_actions(self):
 		"""
@@ -668,7 +669,7 @@ class Environment:
 			self.move(i, [randx, randy])
 		self.reset_history()
 	
-	def positions_in_radius(self, radius, position):
+	def positions_in_radius(self, radius, position, no_insides=False):
 		"""
 		Returns a list of valid positions within a target radius of position
 		"""
@@ -676,21 +677,46 @@ class Environment:
 		posx, posy = position
 		bottom_leftx,bottom_lefty = posx-radius,posy-radius
 		box = [ ]
+		if no_insides:
+			# bottom and top of box
+			for i in range(2*radius+1):
+				posx, posy = bottom_leftx+i, bottom_lefty
+				if (0 <= posx < sizex and 0 <= posy < sizey):
+					if  (self.dist([posx, posy], position) > 0 and self.verticeMatrix[posx, posy] == 1):
+						box.append([posx, posy])
+				posx, posy = bottom_leftx+i, bottom_lefty+2*radius
+				if (0 <= posx < sizex and 0 <= posy < sizey):
+					if  (self.dist([posx, posy], position) > 0 and self.verticeMatrix[posx, posy] == 1):
+						box.append([posx, posy])
+			#left and right of box
+			for i in range(1, 2*radius):
+				posx, posy = bottom_leftx, bottom_lefty+i
+				if (0 <= posx < sizex and 0 <= posy < sizey):
+					if  (self.dist([posx, posy], position) > 0 and self.verticeMatrix[posx, posy] == 1):
+						box.append([posx, posy])
+				posx, posy = bottom_leftx+2*radius, bottom_lefty+i
+				if (0 <= posx < sizex and 0 <= posy < sizey):
+					if  (self.dist([posx, posy], position) > 0 and self.verticeMatrix[posx, posy] == 1):
+						box.append([posx, posy])
+		if len(box) >= 2:
+			return box
+		
+		#get insides as well
 		for i in range(2*radius+1):
 			for j in range(2*radius+1):
 				posx, posy = bottom_leftx+i, bottom_lefty+j
 				if (0 <= posx < sizex and 0 <= posy < sizey):
-					if  (self.dist([posx, posy], position) > 0 and self.verticeMatrix[posx, posy] == 1):
+					if  (self.dist([posx, posy], position) > 0 and self.verticeMatrix[posx, posy] == 1 and [posx, posy] not in box):	
 						box.append([posx, posy])
 		return box
 
 
-	def rand_initialise_within_radius(self, radius, bots_in_radius, pacman_pos):
+	def rand_initialise_within_radius(self, radius, bots_in_radius, pacman_pos, bot_on_radius=False):
 		"""
 		Initializes positions of bots_in_radius bots within radius of pacman_pos, other bots get random locations
 		"""
 		sizex, sizey = self.size
-		box = self.positions_in_radius(radius, pacman_pos)
+		box = self.positions_in_radius(radius, pacman_pos, bot_on_radius)
 		taken = []
 		for i in range(bots_in_radius):
 			if len(taken) == len(box):
@@ -787,6 +813,11 @@ class Environment:
 				bot_crashes[-1] = 1
 			self.update_history()
 		return True, bot_crashes
-
 	
-		
+	def back_to_start(self):
+		"""
+		resets to starting positions from last rand_initialize
+		"""
+		for i in range(len(self.bots)):
+			self.move(i, self.starting_positions[i])
+		self.reset_history()
