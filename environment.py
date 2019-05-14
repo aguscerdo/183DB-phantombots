@@ -718,9 +718,16 @@ class Environment:
 		Initializes positions of bots_in_radius bots within radius of pacman_pos, other bots get random locations
 		"""
 		sizex, sizey = self.size
-		box = self.positions_in_radius(radius, pacman_pos, bot_on_radius)
 		taken = []
-		for i in range(bots_in_radius):
+		# if needed, put first bot on boundary if possible
+		if bot_on_radius:
+			boundary = self.positions_in_radius(radius, pacman_pos, bot_on_radius)
+			randnum = np.random.randint(0, high=len(boundary))
+			self.move(i, boundary[randnum])
+			taken.append(randnum)
+
+		box = self.positions_in_radius(radius, pacman_pos, no_insides=False)
+		for i in range(len(taken), bots_in_radius):
 			if len(taken) == len(box):
 				break
 			randnum = np.random.randint(0, high=len(box))
