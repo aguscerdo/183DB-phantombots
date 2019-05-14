@@ -394,6 +394,8 @@ class Environment:
 		# reward for enemies is negative reward for pacman
 		if pacman:
 			return bot_reward - pursuer_reward
+		if bot_reward + pursuer_reward == 0:
+			return -1 # if nothing happened, penalise a bit
 		return bot_reward + pursuer_reward
 	
 	def immediate_reward_to_total(self, rewards, discount_factor):
@@ -403,12 +405,15 @@ class Environment:
 		total_rewards = np.copy(rewards)
 		#loop backwards from 2nd last el to last el
 		reward = self.reward_win
-		if total_rewards[-1] > 0:
+		"""if total_rewards[-1] > 0:
 			for i in range(len(total_rewards)-2, -1, -1):
 				#total_rewards[i] = total_rewards[i]*discount_factor + (1-discount_factor)*total_rewards[i+1]
 				total_rewards[i] = total_rewards[i] + reward
 				reward *= 0.98
-				
+		"""
+		# reward similar to value function
+		for i in range(len(total_rewards)-2, -1, -1):
+				total_rewards[i] = total_rewards[i] + (discount_factor)*total_rewards[i+1]	
 		return total_rewards
 
 	def adjacent(self, pos):
