@@ -19,7 +19,6 @@ class MultiAgentCNN:
 	def build_network(self):
 		self.images = tf.placeholder(tf.float32, shape=(None, 11, 11, 4), name='in_image')
 		
-		self.epsilon = tf.placeholder(tf.float32, (1,))
 		nn = tf.layers.conv2d(inputs=self.images, filters=32,
 		                        kernel_size=[3, 3], padding='same',
 		                        activation='relu')
@@ -37,15 +36,9 @@ class MultiAgentCNN:
 		with tf.variable_scope('fully_connected'):
 			flat = tf.layers.flatten(nn)
 			nn1 = tf.layers.Dense(64, activation='relu')(flat)
-			drop1 = tf.layers.Dropout(0.2)(nn1)
-			batchnorm = tf.layers.batch_normalization(drop1)
-			self.predicted_reward = tf.layers.Dense(5)(batchnorm)
-		
-		with tf.variable_scope('exploration'):
-			randy = tf.random.uniform((1, ))
-			self.action = tf.cond(tf.reduce_any(tf.less(self.epsilon, randy)),
-			              lambda: tf.cast(tf.random.uniform((tf.shape(self.predicted_reward)[0], 1), 0, 5), dtype=tf.int64),
-			              lambda: tf.argmax(self.predicted_reward, axis=1))
+			# drop1 = tf.layers.Dropout(0.2)(nn1)
+			# batchnorm = tf.layers.batch_normalization(drop1)
+			self.predicted_reward = tf.layers.Dense(5)(nn1)
 		
 		self.action_in = tf.placeholder(tf.int32, shape=(None, 1), name='action_in')
 		self.reward_in = tf.placeholder(tf.float32, shape=(None, 1), name='actual_rewards')
@@ -137,7 +130,6 @@ class MultiAgentCNN:
 		images = np.asarray(tensor_list)
 		rewards = np.asarray(reward_list).reshape(-1, 1)
 		actions = np.asarray(actions_list).reshape(-1, 1)
-		epsilon = np.array(0).reshape((1,))
 
 		for i in range(7):
 			self.sess.run(self.opt,
@@ -145,7 +137,6 @@ class MultiAgentCNN:
 				              self.images: images,
 				              self.reward_in: rewards,
 				              self.action_in: actions,
-				              self.epsilon: epsilon
 			              })
 		
 		if save:
@@ -156,7 +147,6 @@ class MultiAgentCNN:
 				              self.images: images,
 				              self.reward_in: rewards,
 				              self.action_in: actions,
-				              self.epsilon: epsilon
 			              })
 		
 
@@ -171,17 +161,14 @@ class MultiAgentCNN:
 		writer.flush()
 		
 
-	def predict(self, tensor_in, epsilon=0):
+	def predict(self, tensor_in):
 		tensor = np.asarray(tensor_in)
 		if len(tensor.shape) == 3:
 			tensor = tensor.reshape((1, -3, -2, -1))
-		epsilon = np.array(epsilon).reshape((1,))
-		# pl_reward = np.array([-1.])
-		# pl_action = np.array([0])
-		out = self.sess.run(self.action,
+
+		out = self.sess.run(self.predicted_reward,
 		              feed_dict={
 			              self.images: tensor,
-			              self.epsilon: epsilon
 		              })
 		return out
 	

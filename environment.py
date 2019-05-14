@@ -70,6 +70,7 @@ class Environment:
 			self.occupiedVertices.append(bot.get_position())
 			self.history.append([bot.get_position()])
 		
+		self.reward_win = 100
 		
 
 	def set_vertice_matrix(self):
@@ -361,26 +362,34 @@ class Environment:
 		"""
 		Gets the immediate reward from target state, if state is None uses current state
 		"""
+		
+		reward_inner_wall = -150
+		
 		if state is None:
 			state = self.get_state_channels(bot=bot)
 		pacman = (bot == -1) or (bot >= len(self.bots)-1)
 		pursuer_reward = 0
 		env_state, self_state, ally_state, enemy_state = state
 		# if collision between pursuer and pacman, get reward
+		
 		collision_matrix = np.multiply(ally_state, enemy_state)
-		pursuer_reward += np.sum(collision_matrix) * 10
+		pursuer_reward += np.sum(collision_matrix) * self.reward_win
+		
 		# if collision between allies and environment, get negative reward
 		# if collision between enemies and environment, get positive reward
 		# env = 0 and ally/enemy = 1 => reward nonzero
 		# wall = 1 and ally/enemy = 1 => ally/enemy in wall
 		bot_reward = 0
 		walls = 1 + env_state
-		collision_matrix = np.equal(walls, ally_state)
-		bot_reward += -np.sum(collision_matrix)*100
+		
+		# collision_matrix = np.equal(walls, ally_state)
+		# bot_reward += np.sum(collision_matrix)*100
+		
 		collision_matrix = np.equal(walls, self_state)
-		bot_reward += -np.sum(collision_matrix)*1000
-		collision_matrix = np.equal(walls, enemy_state)
-		bot_reward += np.sum(collision_matrix)*100
+		bot_reward += np.sum(collision_matrix)*reward_inner_wall
+		
+		# collision_matrix = np.equal(walls, enemy_state)
+		# bot_reward += np.sum(collision_matrix)*reward_win
 		# reward for enemies is negative reward for pacman
 		if pacman:
 			return bot_reward - pursuer_reward
@@ -392,9 +401,13 @@ class Environment:
 		"""
 		total_rewards = np.copy(rewards)
 		#loop backwards from 2nd last el to last el
-		for i in range(len(total_rewards)-2, -1, -1):
-			#total_rewards[i] = total_rewards[i]*discount_factor + (1-discount_factor)*total_rewards[i+1]
-			total_rewards[i] = total_rewards[i] + (discount_factor)*total_rewards[i+1]
+		reward = self.reward_win
+		if total_rewards[-1] > 0:
+			for i in range(len(total_rewards)-2, -1, -1):
+				#total_rewards[i] = total_rewards[i]*discount_factor + (1-discount_factor)*total_rewards[i+1]
+				total_rewards[i] = total_rewards[i] + reward
+				reward *= 0.98
+				
 		return total_rewards
 
 	def adjacent(self, pos):
@@ -404,7 +417,8 @@ class Environment:
 		:return: list of tuples [(xi, yi)]
 		"""
 		x, y = pos
-		adj = [ [x+1, y], [x-1, y], [x, y+1], [x, y-1] ]
+		adj = [ [x, y+1], [x+1, y], [x, y-1], [x-1, y], [x, y]]     # TODO CHECK IT DOES NOT BREAK
+		#          UP       RIGHT     DOWN      LEFT     NONE
 		return adj
 
 	def update_history(self):
@@ -640,7 +654,7 @@ class Environment:
 			self.move(1, [10,0])
 			self.move(2, [10,10])
 			self.move(3, [0,10])
-			self.move(-1, [6,6])
+			self.move(-1, [5,5])
 			self.reset_history()
 			return
 		
