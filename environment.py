@@ -654,6 +654,48 @@ class Environment:
 			self.move(i, [randx, randy])
 		self.reset_history()
 	
+	def positions_in_radius(self, radius, position):
+		"""
+		Returns a list of valid positions within a target radius of position
+		"""
+		sizex, sizey = self.size
+		posx, posy = position
+		bottom_leftx,bottom_lefty = posx-radius,posy-radius
+		box = [ ]
+		for i in range(2*radius+1):
+			for j in range(2*radius+1):
+				posx, posy = bottom_leftx+i, bottom_lefty+j
+				if (0 <= posx < sizex and 0 <= posy < sizey):
+					if  (self.dist([posx, posy], position) > 0 and self.verticeMatrix[posx, posy] == 1):
+						box.append([posx, posy])
+		return box
+
+
+	def rand_initialise_within_radius(self, radius, bots_in_radius, pacman_pos):
+		"""
+		Initializes positions of bots_in_radius bots within radius of pacman_pos, other bots get random locations
+		"""
+		sizex, sizey = self.size
+		box = self.positions_in_radius(radius, pacman_pos)
+		taken = []
+		for i in range(bots_in_radius):
+			if len(taken) == len(box):
+				break
+			randnum = np.random.randint(0, high=len(box))
+			while randnum in taken:
+				randnum = np.random.randint(0, high=len(box))
+			self.move(i, box[randnum])
+			taken.append(randnum)
+		for i in range(len(taken), len(self.bots)-1):
+			randx = np.random.randint(0, high=sizex)
+			randy = np.random.randint(0, high=sizey)
+			while [randx, randy] in self.occupiedVertices or self.verticeMatrix[randx, randy] == 0:
+				randx = np.random.randint(0, high=sizex)
+				randy = np.random.randint(0, high=sizey)
+			self.move(i, [randx, randy])
+		self.move(-1, pacman_pos)
+		self.reset_history()
+		return self.get_all_positions()
 
 	def transition_to_action(self, prev_pos, next_pos):
 		"""
