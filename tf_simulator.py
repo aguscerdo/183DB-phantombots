@@ -22,8 +22,6 @@ class TfSimulator:
 		rewards = []
 		actions = []
 		
-		self.reset()    # TODO allow for restart on point
-		
 		bot_states = np.array([self.env.get_state_channels(bb) for bb in [0, 1, 2, 3, -1]])
 		
 		states.append(bot_states[bot])
@@ -40,10 +38,13 @@ class TfSimulator:
 			if np.random.uniform() < epsilon:
 				for bb in range(len(self.env.bots)-1):
 					moves = self.env.adjacent(self.env.bots[bb].get_position())
-					legal_moves = np.array([moves for idx, m in enumerate(moves)
+					legal_moves = np.array([idx for idx, m in enumerate(moves)
 					                        if self.env.legal_move_bot(bb, m)])
-					rand_move = np.random.choice(legal_moves, 1)
-					predicted_movements.append(rand_move)
+					ss_rand = np.arange(legal_moves.shape[0])
+					np.random.shuffle(ss_rand)
+					
+					rand_move = legal_moves[ss_rand[0]]
+					predicted_movements.append(int(rand_move))
 			else:
 				if bot_states.shape[1:] != (11, 11, 4):
 					bot_states = np.transpose(bot_states, axes=(0, 2, 3, 1))
@@ -51,10 +52,19 @@ class TfSimulator:
 				
 				for bb in range(len(self.env.bots)-1):
 					moves = self.env.adjacent(self.env.bots[bb].get_position())
-					legal_moves = np.array([[predicted_reward[bb][idx], m] for idx, m in enumerate(moves)
-					                        if self.env.legal_move_bot(bb, m)])
-					max_move = legal_moves[np.argmax(legal_moves[:, 0])][1]
-					predicted_movements.append(max_move)
+					
+					legal_moves = []
+					for idx, m in enumerate(moves):
+						if self.env.legal_move_bot(bb, m) and idx < 4:
+							legal_moves.append([predicted_reward[bb][idx], idx])
+						else:
+							pass
+					legal_moves = np.array(legal_moves)
+					if len(legal_moves) == 0:
+						max_move = 4
+					else:
+						max_move = legal_moves[np.argmax(legal_moves[:, 0])][1]
+					predicted_movements.append(int(max_move))
 			
 			action_to_do = predicted_movements[bot]
 			action_to_do = action_to_do[0] if isinstance(action_to_do, np.ndarray) else action_to_do
@@ -87,10 +97,10 @@ class TfSimulator:
 		return states, rewards, actions
 
 
-	def run_and_plot(self, dir, epoch):
-		self.reset(True)
-		self.run_simulation(0, 250)
-		self.env.animate(dir, epoch)
+	def run_and_plot(self, dir, epoch, radius=5):
+		self.env.rand_initialise_within_radius(radius, 3, [5, 5])
+		self.run_simulation(0, 50)
+		self.env.animate(dir, epoch, radius)
 
 # if __name__ == '__main__':
 #

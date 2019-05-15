@@ -29,16 +29,18 @@ class MultiAgentCNN:
 		# 	nn = self.residual_layer(nn)
 		
 		with tf.variable_scope('inception_1'):
-			nn = self.inception_layer(nn, True)
-		with tf.variable_scope('inception_2'):
-			nn = self.inception_layer(nn, True)
-		
+			nn = self.inception_layer(nn, False)
+		# with tf.variable_scope('inception_2'):
+		# 	nn = self.inception_layer(nn, False)
+
 		with tf.variable_scope('fully_connected'):
 			flat = tf.layers.flatten(nn)
 			nn1 = tf.layers.Dense(64, activation='relu')(flat)
+			nn1 = tf.layers.Dense(16, activation='softmax')(nn1)
+
 			# drop1 = tf.layers.Dropout(0.2)(nn1)
-			# batchnorm = tf.layers.batch_normalization(drop1)
-			self.predicted_reward = tf.layers.Dense(5)(nn1)
+			nn1 = tf.layers.batch_normalization(nn1)
+			self.predicted_reward = tf.layers.Dense(5, activation="linear")(nn1)
 		
 		self.action_in = tf.placeholder(tf.int32, shape=(None, 1), name='action_in')
 		self.reward_in = tf.placeholder(tf.float32, shape=(None, 1), name='actual_rewards')
@@ -49,7 +51,7 @@ class MultiAgentCNN:
 			self.loss = tf.losses.mean_squared_error(self.reward_in,  self.gathered_rewards)
 			#self.MSE(self.reward_in, self.gathered_rewards)
 		
-		self.opt = tf.train.AdamOptimizer().minimize(self.loss)
+		self.opt = tf.train.AdamOptimizer(learning_rate=0.1).minimize(self.loss)
 		tf.summary.scalar('loss', self.loss)
 		
 	
@@ -127,17 +129,32 @@ class MultiAgentCNN:
 		
 	
 	def train(self, tensor_list, reward_list, actions_list, save=False):
-		images = np.asarray(tensor_list)
-		rewards = np.asarray(reward_list).reshape(-1, 1)
-		actions = np.asarray(actions_list).reshape(-1, 1)
+		images = np.array(tensor_list)
+		rewards = np.array(reward_list).reshape(-1, 1)
+		actions = np.array(actions_list).reshape(-1, 1)
 
-		for i in range(7):
-			self.sess.run(self.opt,
-			              feed_dict={
-				              self.images: images,
-				              self.reward_in: rewards,
-				              self.action_in: actions,
-			              })
+		batch_size = 64
+		num_samples = len(rewards)
+		
+		aranged = np.arange(num_samples)
+		
+		for j in range(3):
+			np.random.shuffle(aranged)
+			print("\t- Trainining...", j)
+
+			for i in range(num_samples // batch_size):
+				getter = aranged[i*batch_size:(i+1)*batch_size]
+				
+				sampled_images = images[getter]
+				sampled_rewards = rewards[getter]
+				sampled_actions = actions[getter]
+				
+				self.sess.run(self.opt,
+				              feed_dict={
+					              self.images: sampled_images,
+					              self.reward_in: sampled_rewards,
+					              self.action_in: sampled_actions,
+				              })
 		
 		if save:
 			self.save()
@@ -162,7 +179,7 @@ class MultiAgentCNN:
 		
 
 	def predict(self, tensor_in):
-		tensor = np.asarray(tensor_in)
+		tensor = np.array(tensor_in)
 		if len(tensor.shape) == 3:
 			tensor = tensor.reshape((1, -3, -2, -1))
 

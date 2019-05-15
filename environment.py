@@ -402,9 +402,7 @@ class Environment:
 		"""
 		given list of rewards, ri = reward at time i, propogate rewards backward
 		"""
-		total_rewards = np.copy(rewards)
 		#loop backwards from 2nd last el to last el
-		reward = self.reward_win
 		"""if total_rewards[-1] > 0:
 			for i in range(len(total_rewards)-2, -1, -1):
 				#total_rewards[i] = total_rewards[i]*discount_factor + (1-discount_factor)*total_rewards[i+1]
@@ -412,9 +410,9 @@ class Environment:
 				reward *= 0.98
 		"""
 		# reward similar to value function
-		for i in range(len(total_rewards)-2, -1, -1):
-				total_rewards[i] = total_rewards[i] + (discount_factor)*total_rewards[i+1]	
-		return total_rewards
+		for i in reversed(range(0, len(rewards)-1)):
+			rewards[i] = rewards[i] + 0.988*rewards[i+1]
+		return rewards
 
 	def adjacent(self, pos):
 		"""
@@ -558,7 +556,7 @@ class Environment:
 		return np.abs(a[0] - b[0]) + np.abs(a[1] - b[1])
 
 
-	def animate(self, out_dir=None, epoch=0):
+	def animate(self, out_dir=None, epoch=0, radius=None):
 		"""
 		Animate the bot history
 		:return:
@@ -589,7 +587,11 @@ class Environment:
 			ax.set_title("Step {}".format(i))
 		
 		anim = FuncAnimation(fig, update, frames=history.shape[1], interval=115)
-		out = 'animations/{}/{}-{}.mp4'.format(out_dir, epoch, time.time())
+		if radius is None:
+			out = 'animations/{}/{}-{}.mp4'.format(out_dir, epoch, time.time())
+		else:
+			out = 'animations/{}/{}-{}-{}.mp4'.format(out_dir, radius, epoch, time.time())
+
 		anim.save(out, writer='ffmpeg')
 	
 	
