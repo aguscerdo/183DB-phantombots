@@ -673,14 +673,19 @@ class Environment:
 		
 		sizex, sizey = self.size
 		for i in range(len(self.bots)):
-			randx = np.random.randint(0, high=sizex)
-			randy = np.random.randint(0, high=sizey)
-			while [randx, randy] in self.occupiedVertices or self.verticeMatrix[randx, randy] == 0:
-				randx = np.random.randint(0, high=sizex)
-				randy = np.random.randint(0, high=sizey)
+			randx, randy = self.rand_position()
 			self.move(i, [randx, randy])
 		self.reset_history()
 	
+	def rand_position(self):
+		sizex, sizey = self.size
+		randx = np.random.randint(0, high=sizex)
+		randy = np.random.randint(0, high=sizey)
+		while [randx, randy] in self.occupiedVertices or self.verticeMatrix[randx, randy] == 0:
+			randx = np.random.randint(0, high=sizex)
+			randy = np.random.randint(0, high=sizey)
+		return [randx, randy]
+
 	def positions_in_radius(self, radius, position, no_insides=False):
 		"""
 		Returns a list of valid positions within a target radius of position
