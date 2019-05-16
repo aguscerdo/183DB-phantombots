@@ -10,33 +10,38 @@ from time import time
 def main():
 	game = Game()
 	m = MultiAgentCNN()
+	ml_simulator = TfSimulator(m)
 
-	epochs = 10
+	epochs = 100
 	sim_per_epoch = 25
 	re_sim_per_epoch = 5
 	steps_per_run = 50
 
-	subsample = 1
+	subsample = 2
 
-	epsilon = 0.7
-	base_cap = 0.6
+	epsilon = 1.
+	base_cap = 0.4
 	
 	run_dir = '{}_{}_{}_{}'.format(time(), epochs, sim_per_epoch, steps_per_run)
 	print('Saving to {}'.format(run_dir))
 	os.mkdir('animations/'+run_dir)
 	
-	decay = (1 - 10e-5)
+	decay = (1 - 5e-5)
 	decayer = 1.
 
-	ml_simulator = TfSimulator(m)
-	
-	
 	loss_history = []
 	
+	memory_actions = []
+	memory_states = []
+	memory_rewards = []
 	
-	for radius in range(2, 10):
+	total_steps_performed = 0
+	
+	for e in range(epochs*10):
 		decayer = 1.
-		for e in range(epochs):
+		if total_steps_performed > 2500000:
+			break
+		for radius in range(3, 10):
 			print("Radius {} ---- EPOCH {} ----".format(radius, e))
 			states = []
 			rewards = []
@@ -48,9 +53,8 @@ def main():
 					n_bots = sim % 4 + 1
 				else:
 					n_bots = sim % 2 + 3
-					
-				pos = [5, 5]
 				
+				pos = [5,5]
 				ml_simulator.env.rand_initialise_within_radius(radius, n_bots, pos, bot_on_radius=True)
 				
 				for re_sim in range(re_sim_per_epoch):
@@ -59,24 +63,18 @@ def main():
 
 					decayer *= decay
 					base_cap0 = base_cap * decayer
-					epsilon = epsilon * decay
+					if len(memory_rewards) > 40000:
+						epsilon = epsilon * decay
 					randy = np.random.uniform(0, 1)
 					
 					if randy < base_cap0:
 						s, r, a = game.get_simulation_history(bot=0, N=steps_per_run, subsample=subsample)
-						# s = np.transpose(s, axes=(0, 2, 3, 1))
 
 					else:
-						# ml_simulator.reset()
 						s, r, a = ml_simulator.run_simulation(0, steps_per_run, subsample=subsample, epsilon=epsilon)
 
 					if s is None or r is None or a is None:
 						continue
-					
-					if s is not None and len(s) > 20:
-						r = r[::2]
-						s = s[::2]
-						a = a[::2]
 						
 					s = np.asarray(s)
 					r = np.asarray(r)
@@ -85,24 +83,54 @@ def main():
 					states.append(s)
 					rewards.append(r)
 					actions.append(a)
+				try:
+					statesC = np.concatenate(states, axis=0)
+					rewardsC = np.concatenate(rewards, axis=0)
+					actionsC = np.concatenate(actions, axis=0)
+					if statesC.shape[1:] != (11, 11, 4):
+						statesC = statesC.transpose((0, 2, 3, 1))
+					ml_simulator.model.train(statesC, rewardsC, actionsC)
+				except:
+					pass
+			
 			try:
-				states = np.concatenate(states, axis=0)
-				rewards = np.concatenate(rewards, axis=0)
-				actions = np.concatenate(actions, axis=0)
+				_ = np.concatenate(states, axis=0)
+				_ = np.concatenate(rewards, axis=0)
+				_ = np.concatenate(actions, axis=0)
 				
-				if states.shape[1:] != (11, 11, 4):
-					states = states.transpose((0, 2, 3, 1))
-				
-				save = (e % 3 == 0)
-				print("\t- Training...")
-				loss = m.train(states, rewards, actions, save=save)
-				if save:
-					ml_simulator.run_and_plot(run_dir, e, radius)
-				
-				print('\tLoss: {}'.format(loss))
-				loss_history.append(loss)
+				n = len(rewards)
+				total_steps_performed += n
+				if len(memory_rewards) > 50000:
+					memory_rewards = memory_rewards[n*2:] + rewards
+					memory_actions = memory_actions[n*2:] + actions
+					memory_states = memory_states[n*2:] + states
+				else:
+					memory_rewards = memory_rewards + rewards
+					memory_actions = memory_actions + actions
+					memory_states = memory_states + states
 			except Exception as e:
 				pass
+			
+			try:
+				statesC = np.concatenate(memory_states, axis=0)
+				rewardsC = np.concatenate(memory_rewards, axis=0)
+				actionsC = np.concatenate(memory_actions, axis=0)
+				
+				if statesC.shape[1:] != (11, 11, 4):
+					statesC = statesC.transpose((0, 2, 3, 1))
+				
+				save = (e % 10 == 0)
+				print("\t- Training...")
+				loss = ml_simulator.model.train(statesC, rewardsC, actionsC, save=save)
+				if save:
+					ml_simulator.run_and_plot(run_dir, e, radius)
+				print('\tLoss: {}'.format(loss))
+				loss_history.append(loss)
+			except:
+				pass
+			
+
+
 
 	
 	m.save()

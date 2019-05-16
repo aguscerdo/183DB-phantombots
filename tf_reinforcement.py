@@ -17,9 +17,9 @@ class MultiAgentCNN:
 		
 	
 	def build_network(self):
-		self.images = tf.placeholder(tf.float32, shape=(None, 11, 11, 4), name='in_image')
+		self.images = tf.placeholder(tf.float32, shape=(None, 11, 11, 3), name='in_image')
 		
-		nn = tf.layers.conv2d(inputs=self.images, filters=32,
+		nn = tf.layers.conv2d(inputs=self.images, filters=16,
 		                        kernel_size=[3, 3], padding='same',
 		                        activation='relu')
 		
@@ -36,8 +36,6 @@ class MultiAgentCNN:
 		with tf.variable_scope('fully_connected'):
 			flat = tf.layers.flatten(nn)
 			nn1 = tf.layers.Dense(64, activation='relu')(flat)
-			nn1 = tf.layers.Dense(16, activation='softmax')(nn1)
-
 			# drop1 = tf.layers.Dropout(0.2)(nn1)
 			nn1 = tf.layers.batch_normalization(nn1)
 			self.predicted_reward = tf.layers.Dense(5, activation="linear")(nn1)
@@ -51,7 +49,7 @@ class MultiAgentCNN:
 			self.loss = tf.losses.mean_squared_error(self.reward_in,  self.gathered_rewards)
 			#self.MSE(self.reward_in, self.gathered_rewards)
 		
-		self.opt = tf.train.AdamOptimizer(learning_rate=0.1).minimize(self.loss)
+		self.opt = tf.train.MomentumOptimizer(momentum = 0.5, learning_rate=0.01).minimize(self.loss)
 		tf.summary.scalar('loss', self.loss)
 		
 	
@@ -67,13 +65,13 @@ class MultiAgentCNN:
 	
 	@staticmethod
 	def residual_layer(layer_in):
-		cnn1 = tf.layers.conv2d(inputs=layer_in, filters=32,
+		cnn1 = tf.layers.conv2d(inputs=layer_in, filters=16,
 		                        kernel_size=[3, 3], padding='same',
 		                        activation='relu')
 		
 		batch1 = tf.layers.batch_normalization(cnn1)
 		
-		cnn2 = tf.layers.conv2d(inputs=batch1, filters=32,
+		cnn2 = tf.layers.conv2d(inputs=batch1, filters=16,
 		                        kernel_size=[3, 3], padding='same',
 		                        activation=None)
 		
@@ -84,32 +82,32 @@ class MultiAgentCNN:
 	@staticmethod
 	def __inception_layer_helper(layer_in):
 		# 1x1
-		cnn11 = tf.layers.conv2d(inputs=layer_in, filters=64,
+		cnn11 = tf.layers.conv2d(inputs=layer_in, filters=32,
 	                        kernel_size=[1, 1], padding='same',
 	                        activation='relu')
 			
 		# 2x2
-		cnn12 = tf.layers.conv2d(inputs=layer_in, filters=256,
+		cnn12 = tf.layers.conv2d(inputs=layer_in, filters=32,
 	                        kernel_size=[1, 1], padding='same',
 	                        activation='relu')
 		
-		cnn22 = tf.layers.conv2d(inputs=cnn12, filters=256,
+		cnn22 = tf.layers.conv2d(inputs=cnn12, filters=32,
 		                        kernel_size=[2, 2], padding='same',
 		                        activation='relu')
 
 		# 3x3
-		cnn13 = tf.layers.conv2d(inputs=layer_in, filters=256,
+		cnn13 = tf.layers.conv2d(inputs=layer_in, filters=32,
 	                        kernel_size=[1, 1], padding='same',
 	                        activation='relu')
 		
-		cnn23 = tf.layers.conv2d(inputs=cnn13, filters=64,
+		cnn23 = tf.layers.conv2d(inputs=cnn13, filters=32,
 		                        kernel_size=[3, 3], padding='same',
 		                        activation='relu')
 			
 		
 		# Concat
 		concat = tf.concat([cnn11, cnn22, cnn23], axis=-1)
-		out = tf.layers.conv2d(inputs=concat, filters=64,
+		out = tf.layers.conv2d(inputs=concat, filters=32,
 		                        kernel_size=[1, 1], padding='same',
 		                        activation='relu')
 		
@@ -133,29 +131,29 @@ class MultiAgentCNN:
 		rewards = np.array(reward_list).reshape(-1, 1)
 		actions = np.array(actions_list).reshape(-1, 1)
 
-		batch_size = 64
+		batch_size = 32
 		num_samples = len(rewards)
 		
 		aranged = np.arange(num_samples)
 		
-		for j in range(3):
-			np.random.shuffle(aranged)
-			print("\t- Trainining...", j)
-
-			for i in range(num_samples // batch_size):
-				getter = aranged[i*batch_size:(i+1)*batch_size]
-				
-				sampled_images = images[getter]
-				sampled_rewards = rewards[getter]
-				sampled_actions = actions[getter]
-				
-				self.sess.run(self.opt,
-				              feed_dict={
-					              self.images: sampled_images,
-					              self.reward_in: sampled_rewards,
-					              self.action_in: sampled_actions,
-				              })
+		np.random.shuffle(aranged)
 		
+		for i in range(num_samples // batch_size):
+			if i * batch_size > 15000:
+				break
+			getter = aranged[i*batch_size:(i+1)*batch_size]
+			
+			sampled_images = images[getter]
+			sampled_rewards = rewards[getter]
+			sampled_actions = actions[getter]
+			
+			self.sess.run(self.opt,
+			              feed_dict={
+				              self.images: sampled_images,
+				              self.reward_in: sampled_rewards,
+				              self.action_in: sampled_actions,
+			              })
+	
 		if save:
 			self.save()
 		

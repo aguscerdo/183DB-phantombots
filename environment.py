@@ -327,7 +327,7 @@ class Environment:
 		Returns state as channels, 
 		State = Enviroment, Self, Allies, Enemies 
 		"""
-		state = [self.verticeMatrix]
+		state = []  #self.verticeMatrix
 		
 		pac_state = np.zeros(self.size)
 		posx, posy = self.bots[-1].get_position()
@@ -370,7 +370,8 @@ class Environment:
 			state = self.get_state_channels(bot=bot)
 		pacman = (bot == -1) or (bot >= len(self.bots)-1)
 		pursuer_reward = 0
-		env_state, self_state, ally_state, enemy_state = state
+		self_state, ally_state, enemy_state = state
+		env_state = self.verticeMatrix
 		# if collision between pursuer and pacman, get reward
 		
 		collision_matrix = np.multiply(ally_state, enemy_state)
@@ -509,7 +510,9 @@ class Environment:
 		"""
 		num_pursuers = len(self.bots) - 1
 		# Pursuers check 
-		env_state, self_state, ally_state, enemy_state = self.get_state_channels(1)
+		# env_state, self_state, ally_state, enemy_state = self.get_state_channels(1)
+		self_state, ally_state, enemy_state = self.get_state_channels(1)
+		env_state = self.verticeMatrix
 		walls = 1 + env_state
 		collision_matrix = np.equal(walls, ally_state)
 		collision = np.sum(collision_matrix)
@@ -670,14 +673,19 @@ class Environment:
 		
 		sizex, sizey = self.size
 		for i in range(len(self.bots)):
-			randx = np.random.randint(0, high=sizex)
-			randy = np.random.randint(0, high=sizey)
-			while [randx, randy] in self.occupiedVertices or self.verticeMatrix[randx, randy] == 0:
-				randx = np.random.randint(0, high=sizex)
-				randy = np.random.randint(0, high=sizey)
+			randx, randy = self.rand_position()
 			self.move(i, [randx, randy])
 		self.reset_history()
 	
+	def rand_position(self):
+		sizex, sizey = self.size
+		randx = np.random.randint(0, high=sizex)
+		randy = np.random.randint(0, high=sizey)
+		while [randx, randy] in self.occupiedVertices or self.verticeMatrix[randx, randy] == 0:
+			randx = np.random.randint(0, high=sizex)
+			randy = np.random.randint(0, high=sizey)
+		return [randx, randy]
+
 	def positions_in_radius(self, radius, position, no_insides=False):
 		"""
 		Returns a list of valid positions within a target radius of position
