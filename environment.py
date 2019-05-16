@@ -412,7 +412,7 @@ class Environment:
 		"""
 		# reward similar to value function
 		for i in reversed(range(0, len(rewards)-1)):
-			rewards[i] = rewards[i] + 0.988*rewards[i+1]
+			rewards[i] = rewards[i] + discount_factor*rewards[i+1]
 		return rewards
 
 	def adjacent(self, pos):

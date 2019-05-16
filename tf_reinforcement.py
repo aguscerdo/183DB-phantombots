@@ -23,21 +23,20 @@ class MultiAgentCNN:
 		                        kernel_size=[3, 3], padding='same',
 		                        activation='relu')
 		
-		# with tf.variable_scope('residual_1'):
-		# 	nn = self.residual_layer(nn)
-		# with tf.variable_scope('residual_2'):
-		# 	nn = self.residual_layer(nn)
+		with tf.variable_scope('residual_1'):
+			nn = self.residual_layer(nn)
+		with tf.variable_scope('residual_2'):
+			nn = self.residual_layer(nn)
 		
-		with tf.variable_scope('inception_1'):
-			nn = self.inception_layer(nn, False)
+		# with tf.variable_scope('inception_1'):
+		# 	nn = self.inception_layer(nn, False)
 		# with tf.variable_scope('inception_2'):
 		# 	nn = self.inception_layer(nn, False)
 
 		with tf.variable_scope('fully_connected'):
 			flat = tf.layers.flatten(nn)
 			nn1 = tf.layers.Dense(64, activation='relu')(flat)
-			# drop1 = tf.layers.Dropout(0.2)(nn1)
-			nn1 = tf.layers.batch_normalization(nn1)
+
 			self.predicted_reward = tf.layers.Dense(5, activation="linear")(nn1)
 		
 		self.action_in = tf.placeholder(tf.int32, shape=(None, 1), name='action_in')
@@ -49,7 +48,7 @@ class MultiAgentCNN:
 			self.loss = tf.losses.mean_squared_error(self.reward_in,  self.gathered_rewards)
 			#self.MSE(self.reward_in, self.gathered_rewards)
 		
-		self.opt = tf.train.MomentumOptimizer(momentum = 0.5, learning_rate=0.01).minimize(self.loss)
+		self.opt = tf.train.GradientDescentOptimizer(learning_rate=0.001).minimize(self.loss)
 		tf.summary.scalar('loss', self.loss)
 		
 	
@@ -127,9 +126,9 @@ class MultiAgentCNN:
 		
 	
 	def train(self, tensor_list, reward_list, actions_list, save=False):
-		images = np.array(tensor_list)
-		rewards = np.array(reward_list).reshape(-1, 1)
-		actions = np.array(actions_list).reshape(-1, 1)
+		images = np.asarray(tensor_list)
+		rewards = np.asarray(reward_list).reshape(-1, 1)
+		actions = np.asarray(actions_list).reshape(-1, 1)
 
 		batch_size = 32
 		num_samples = len(rewards)
@@ -147,6 +146,10 @@ class MultiAgentCNN:
 			sampled_rewards = rewards[getter]
 			sampled_actions = actions[getter]
 			
+			while sampled_images.shape[1] != 11 or sampled_images.shape[2] != 11 or sampled_images.shape[3] != 3:
+				sampled_images = sampled_images.transpose((0, 2, 3, 1))
+				
+
 			self.sess.run(self.opt,
 			              feed_dict={
 				              self.images: sampled_images,
@@ -180,7 +183,10 @@ class MultiAgentCNN:
 		tensor = np.array(tensor_in)
 		if len(tensor.shape) == 3:
 			tensor = tensor.reshape((1, -3, -2, -1))
-
+			
+		while tensor.shape[1] != 11 or tensor.shape[2] != 11 or tensor.shape[3] != 3:
+			tensor = tensor.transpose((0, 3, 2, 1))
+			
 		out = self.sess.run(self.predicted_reward,
 		              feed_dict={
 			              self.images: tensor,

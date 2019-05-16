@@ -22,7 +22,7 @@ class TfSimulator:
 		rewards = []
 		actions = []
 		
-		bot_states = np.array([self.env.get_state_channels(bb) for bb in [0, 1, 2, 3, -1]])
+		bot_states = np.array([self.env.get_state_channels(bb) for bb in range(len(self.env.bots))])
 		
 		states.append(bot_states[bot])
 		instant_rewards = self.env.immediate_reward(bot, states[-1])
@@ -35,6 +35,7 @@ class TfSimulator:
 
 			predicted_movements = []
 			
+			# Exploration
 			if np.random.uniform() < epsilon:
 				for bb in range(len(self.env.bots)-1):
 					moves = self.env.adjacent(self.env.bots[bb].get_position())
@@ -45,8 +46,9 @@ class TfSimulator:
 					
 					rand_move = legal_moves[ss_rand[0]]
 					predicted_movements.append(int(rand_move))
+			# Exploitation
 			else:
-				if bot_states.shape[1:] != (11, 11, 4):
+				if bot_states.shape[1:] != (11, 11, 3):
 					bot_states = np.transpose(bot_states, axes=(0, 2, 3, 1))
 				predicted_reward = self.model.predict(bot_states)
 				
@@ -71,7 +73,7 @@ class TfSimulator:
 			actions.append(action_to_do)
 			
 			next_bot_state = [self.env.action_to_transition(predicted_movements[b], self.env.bots[b].get_position())
-			              for b in [0, 1, 2, 3]]
+			              for b in range(len(self.env.bots) - 1)]
 			
 			ok, bot_crashes = self.env.play_round(next_bot_state, target_move1, target_move2)
 			# check if bot crashed, if it did then we give -reward, else give whatever it was supposed to get
@@ -81,7 +83,8 @@ class TfSimulator:
 				rewards.append(self.env.immediate_reward(bot))
 			states.append(self.env.get_state_channels(bot))
 		
-		rewards = self.env.immediate_reward_to_total(rewards, 0.992)
+		# I do not remember what this is for
+		rewards = self.env.immediate_reward_to_total(rewards, 0.8)
 		states = states[:-1]
 		rewards = rewards[1:]
 		
@@ -99,8 +102,9 @@ class TfSimulator:
 
 	def run_and_plot(self, dir, epoch, radius=5):
 		self.env.rand_initialise_within_radius(radius, 3, [5, 5])
-		self.run_simulation(0, 50)
+		self.run_simulation(0, 30)
 		self.env.animate(dir, epoch, radius)
+		print("Animating...")
 
 # if __name__ == '__main__':
 #
