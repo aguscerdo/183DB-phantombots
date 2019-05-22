@@ -11,7 +11,7 @@ If there is supposed to be a double_move for pacman, input it in play_round.
 Examples on how to move are below (first_motion, psuedo_rand_motion)
 """
 import matplotlib
-# matplotlib.use('TkAgg')
+matplotlib.use('TkAgg')
 import matplotlib.pyplot as plt
 from matplotlib.animation import FuncAnimation
 import numpy as np
