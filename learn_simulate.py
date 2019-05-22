@@ -9,8 +9,8 @@ from time import time
 
 def main():
 	game = Game()
-	m = MultiAgentCNN()
-	target_m = MultiAgentCNN()
+	m = MultiAgentCNN("pursuers")
+	target_m = MultiAgentCNN("target")
 	ml_simulator = TfSimulator(m, target_m)
 
 	epochs = 100

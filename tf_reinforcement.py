@@ -5,51 +5,52 @@ import time
 
 
 class MultiAgentCNN:
-	def __init__(self):
+	def __init__(self, name):
 		self.path = './weights'
 		if not os.path.exists(self.path):
 			os.mkdir(self.path)
-			
+		self.name = name
+		
 		self.build_network()
 		self.sess = tf.Session()
 		self.sess.run(tf.global_variables_initializer())
 		self.i = 0
-		
 	
 	def build_network(self):
-		self.images = tf.placeholder(tf.float32, shape=(None, 11, 11, 3), name='in_image')
-		
-		nn = tf.layers.conv2d(inputs=self.images, filters=16,
-		                        kernel_size=[3, 3], padding='same',
-		                        activation='relu')
-		
-		with tf.variable_scope('residual_1'):
-			nn = self.residual_layer(nn)
-		with tf.variable_scope('residual_2'):
-			nn = self.residual_layer(nn)
-		
-		# with tf.variable_scope('inception_1'):
-		# 	nn = self.inception_layer(nn, False)
-		# with tf.variable_scope('inception_2'):
-		# 	nn = self.inception_layer(nn, False)
-
-		with tf.variable_scope('fully_connected'):
-			flat = tf.layers.flatten(nn)
-			nn1 = tf.layers.Dense(64, activation='relu')(flat)
-
-			self.predicted_reward = tf.layers.Dense(5, activation="linear")(nn1)
-		
-		self.action_in = tf.placeholder(tf.int32, shape=(None, 1), name='action_in')
-		self.reward_in = tf.placeholder(tf.float32, shape=(None, 1), name='actual_rewards')
-		
-		
-		with tf.variable_scope('loss'):
-			self.gathered_rewards = tf.gather(self.predicted_reward, self.action_in, axis=1)[:, 0, :]
-			self.loss = tf.losses.mean_squared_error(self.reward_in,  self.gathered_rewards)
-			#self.MSE(self.reward_in, self.gathered_rewards)
-		
-		self.opt = tf.train.GradientDescentOptimizer(learning_rate=0.001).minimize(self.loss)
-		tf.summary.scalar('loss', self.loss)
+		with tf.variable_scope(self.name):
+			self.images = tf.placeholder(tf.float32, shape=(None, 11, 11, 3), name='in_image')
+			
+			nn = tf.layers.conv2d(inputs=self.images, filters=16,
+			                        kernel_size=[3, 3], padding='same',
+			                        activation='relu')
+			
+			with tf.variable_scope('residual_1'):
+				nn = self.residual_layer(nn)
+			with tf.variable_scope('residual_2'):
+				nn = self.residual_layer(nn)
+			
+			# with tf.variable_scope('inception_1'):
+			# 	nn = self.inception_layer(nn, False)
+			# with tf.variable_scope('inception_2'):
+			# 	nn = self.inception_layer(nn, False)
+	
+			with tf.variable_scope('fully_connected'):
+				flat = tf.layers.flatten(nn)
+				nn1 = tf.layers.Dense(64, activation='relu')(flat)
+	
+				self.predicted_reward = tf.layers.Dense(5, activation="linear")(nn1)
+			
+			self.action_in = tf.placeholder(tf.int32, shape=(None, 1), name='action_in')
+			self.reward_in = tf.placeholder(tf.float32, shape=(None, 1), name='actual_rewards')
+			
+			
+			with tf.variable_scope('loss'):
+				self.gathered_rewards = tf.gather(self.predicted_reward, self.action_in, axis=1)[:, 0, :]
+				self.loss = tf.losses.mean_squared_error(self.reward_in,  self.gathered_rewards)
+				#self.MSE(self.reward_in, self.gathered_rewards)
+			
+			self.opt = tf.train.GradientDescentOptimizer(learning_rate=0.001).minimize(self.loss)
+			tf.summary.scalar('loss', self.loss)
 		
 	
 	def MSE(self, y_true, y_pred):
