@@ -71,6 +71,7 @@ class TfSimulator:
 				target_predicted_move1 = (int(max_move))
 			target_actions.append(target_predicted_move1)
 			target_move1 = self.env.action_to_transition(target_predicted_move1, self.env.bots[-1].get_position())
+			target_move2 = None
 			if self.env.bots[-1].double_move():
 				pacpos = self.env.bots[-1].get_position()
 				self_state, ally_state, enemy_state = self.env.get_state_channels(-1)
@@ -112,6 +113,7 @@ class TfSimulator:
 				target_actions.append(target_predicted_move2)
 				target_instant_rewards = self.env.immediate_reward(-1, target_new_state)
 				target_rewards.append(target_instant_rewards)
+				target_move2 =  self.env.action_to_transition(target_predicted_move2, target_move1)
 
 			predicted_movements = []
 			# Exploration pursuer
@@ -155,7 +157,7 @@ class TfSimulator:
 			next_bot_state = [self.env.action_to_transition(predicted_movements[b], self.env.bots[b].get_position())
 			              for b in range(len(self.env.bots) - 1)]
 			
-			target_move2 =  self.env.action_to_transition(target_predicted_move2, target_move1)
+			
 			ok, bot_crashes = self.env.play_round(next_bot_state, target_move1, target_move2)
 			# check if bot crashed, if it did then we give -reward, else give whatever it was supposed to get
 			if bot_crashes[bot]:
@@ -188,7 +190,7 @@ class TfSimulator:
 			target_actions = target_actions[::step]
 		# only track one bot,
 		if len(actions) == 0:
-			return None, None, None
+			return None, None, None, None, None, None
 		
 		return states, rewards, actions, target_states, target_rewards, target_actions
 

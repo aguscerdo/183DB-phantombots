@@ -25,7 +25,7 @@ def main():
 	
 	run_dir = '{}_{}_{}_{}'.format(time(), epochs, sim_per_epoch, steps_per_run)
 	print('Saving to {}'.format(run_dir))
-	os.mkdir('animations/'+run_dir)
+	#os.mkdir('animations/'+run_dir)
 	
 	decay = (1 - 5e-5)
 	decayer = 1.
@@ -204,13 +204,13 @@ def main():
 			target_loss = ml_simulator.target_model.train(target_statesTrain, target_rewardsTrain, target_actionsTrain, save=save)
 			print('\tLoss: {}'.format(loss))
 			print('\ttarget_Loss: {}'.format(target_loss))
-			if save:
-				ml_simulator.run_and_plot(run_dir, e, radius)
+			#if save:
+			#	ml_simulator.run_and_plot(run_dir, e, radius)
 			loss_history.append(loss)
 			target_loss_history.append(target_loss)
 	
 	m.save()
-	ml_simulator.run_and_plot(run_dir, 'FINAL')
+	#ml_simulator.run_and_plot(run_dir, 'FINAL')
 	
 	plt.plot(np.arange(epochs), loss_history)
 	plt.title("Loss over epochs")
