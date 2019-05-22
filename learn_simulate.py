@@ -30,11 +30,16 @@ def main():
 	decayer = 1.
 
 	loss_history = []
+	target_loss_history = []
 	
 	memory_actions = []
 	memory_states = []
 	memory_rewards = []
 	
+	target_memory_actions = []
+	target_memory_states = []
+	target_memory_rewards = []
+
 	total_steps_performed = 0
 	
 	# Run epochs until 2.5M examples have been visited
@@ -48,6 +53,10 @@ def main():
 			rewards = []
 			actions = []
 			
+			target_states = []
+			target_rewards = []
+			target_actions = []
+			
 			for sim in range(sim_per_epoch):
 				# print("\tRun {}".format(sim))
 				n_bots = sim % 3 + 2
@@ -60,6 +69,10 @@ def main():
 				replay_actions = []
 				replay_states  = []
 
+				target_replay_rewards = []
+				target_replay_actions = []
+				target_replay_states  = []
+
 				for re_sim in range(re_sim_per_epoch):
 					ml_simulator.env.back_to_start()
 					
@@ -71,10 +84,11 @@ def main():
 						epsilon = epsilon * decay
 					
 					# Baseline vs Model
-					if np.random.uniform(0, 1) < base_cap0:
+					#if np.random.uniform(0, 1) < base_cap0:
+					if np.random.uniform(0, 1) < 0:
 						s, r, a = game.get_simulation_history(bot=0, N=steps_per_run, subsample=subsample)
 					else:
-						s, r, a = ml_simulator.run_simulation(0, steps_per_run, subsample=subsample, epsilon=epsilon)
+						s, r, a, ts, tr, ta = ml_simulator.run_simulation(0, steps_per_run, subsample=subsample, epsilon=epsilon)
 
 					if s is None or r is None or a is None:
 						continue
@@ -82,11 +96,19 @@ def main():
 					s = np.asarray(s)
 					r = np.asarray(r)
 					a = np.asarray(a)
-					
+
 					replay_states.append(s)
 					replay_rewards.append(r)
 					replay_actions.append(a)
 
+					ts = np.asarray(ts)
+					tr = np.asarray(tr)
+					ta = np.asarray(ta)
+
+					target_replay_states.append(s)
+					target_replay_rewards.append(r)
+					target_replay_actions.append(a)
+					
 				# Soft training
 				try:
 					statesTrain = np.concatenate(replay_states, axis=0)
@@ -96,11 +118,24 @@ def main():
 						statesTrain = statesTrain.transpose((0, 2, 3, 1))
 						
 					ml_simulator.model.train(statesTrain, rewardsTrain, actionsTrain)
+
+
+					target_statesTrain = np.concatenate(target_replay_states, axis=0)
+					target_rewardsTrain = np.concatenate(target_replay_rewards, axis=0)
+					target_actionsTrain = np.concatenate(target_replay_actions, axis=0)
+					if target_statesTrain.shape[1:] != (11, 11, 3):
+						target_statesTrain = target_statesTrain.transpose((0, 2, 3, 1))
+						
+					ml_simulator.target_model.train(target_statesTrain, target_rewardsTrain, target_actionsTrain)
 				
 					# Expand memory DB
 					rewards += replay_rewards
 					actions += replay_actions
 					states += replay_states
+
+					target_rewards += target_replay_rewards
+					target_actions += target_replay_actions
+					target_states += target_replay_states
 				except:
 					pass
 
@@ -108,6 +143,11 @@ def main():
 				_ = np.concatenate(states, axis=0)
 				_ = np.concatenate(rewards, axis=0)
 				_ = np.concatenate(actions, axis=0)
+
+				_ = np.concatenate(target_states, axis=0)
+				_ = np.concatenate(target_rewards, axis=0)
+				_ = np.concatenate(target_actions, axis=0)
+
 			except:
 				continue
 			
@@ -124,6 +164,17 @@ def main():
 				print("\t~ Building memory DB", len(memory_rewards))
 				continue
 			
+			if len(target_memory_rewards) > 50000:
+				target_memory_rewards = target_memory_rewards[n*2:] + rewards
+				target_memory_actions = target_memory_actions[n*2:] + actions
+				target_memory_states = target_memory_states[n*2:] + states
+			else:
+				target_memory_rewards = target_memory_rewards + rewards
+				target_memory_actions = target_memory_actions + actions
+				target_memory_states = target_memory_states + states
+				print("\t~ Building memory target_DB", len(target_memory_rewards))
+				continue
+			
 			
 			try:
 				statesTrain = np.concatenate(memory_states, axis=0)
@@ -131,19 +182,31 @@ def main():
 				actionsTrain = np.concatenate(memory_actions, axis=0)
 			except:
 				continue
+
+			try:
+				target_statesTrain = np.concatenate(target_memory_states, axis=0)
+				target_rewardsTrain = np.concatenate(target_memory_rewards, axis=0)
+				target_actionsTrain = np.concatenate(target_memory_actions, axis=0)
+			except:
+				continue
 			
 			env_shape = ml_simulator.env.verticeMatrix.shape
 			while statesTrain.shape[1] != env_shape[0] or statesTrain.shape[2] != env_shape[1] or statesTrain.shape[3] != 3:
 				statesTrain = statesTrain.transpose((0, 2, 3, 1))
 			
+			while target_statesTrain.shape[1] != env_shape[0] or target_statesTrain.shape[2] != env_shape[1] or target_statesTrain.shape[3] != 3:
+				target_statesTrain = target_statesTrain.transpose((0, 2, 3, 1))
 			# Hard training
 			save = (e + radius % 5 == 0)
 			print("\t- Memory Training...")
 			loss = ml_simulator.model.train(statesTrain, rewardsTrain, actionsTrain, save=save)
+			target_loss = ml_simulator.target_model.train(target_statesTrain, target_rewardsTrain, target_actionsTrain, save=save)
 			print('\tLoss: {}'.format(loss))
+			print('\ttarget_Loss: {}'.format(target_loss))
 			if save:
 				ml_simulator.run_and_plot(run_dir, e, radius)
 			loss_history.append(loss)
+			target_loss_history.append(target_loss)
 	
 	m.save()
 	ml_simulator.run_and_plot(run_dir, 'FINAL')

@@ -394,9 +394,15 @@ class Environment:
 		# bot_reward += np.sum(collision_matrix)*reward_win
 		# reward for enemies is negative reward for pacman
 		if pacman:
-			return bot_reward - pursuer_reward
-		if bot_reward + pursuer_reward == 0:
-			return -1 # if nothing happened, penalise a bit
+			r =  bot_reward - pursuer_reward
+			if r == 0:
+				return 1 # if nothing happened, gain a reward!
+			return r # otherwise 
+		else:
+			r = bot_reward + pursuer_reward
+			if r == 0:
+				return -1 # if nothing happened, penalise a bit
+			return bot_reward + pursuer_reward
 		return bot_reward + pursuer_reward
 	
 	def immediate_reward_to_total(self, rewards, discount_factor):
