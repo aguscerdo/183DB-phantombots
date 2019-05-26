@@ -11,7 +11,7 @@ If there is supposed to be a double_move for pacman, input it in play_round.
 Examples on how to move are below (first_motion, psuedo_rand_motion)
 """
 import matplotlib
-matplotlib.use('TkAgg')
+# matplotlib.use('TkAgg')
 import matplotlib.pyplot as plt
 from matplotlib.animation import FuncAnimation
 import numpy as np
@@ -20,7 +20,7 @@ import csv
 import baseline1 as bs1
 import time
 import itertools
-
+import os
 
 presetSize = [11, 11]
 presetVertices = []
@@ -40,28 +40,27 @@ with open('map.csv') as csvfile:
 # 			presetVertices.append([i,j])
 
 class Environment:
-	def __init__(self, printAll=False, size=None, vertices=None, bots=None ):
+	def __init__(self, printAll=False, size=None, bots=None):
 		self.printAll = printAll
-		if (self.printAll):
+		if self.printAll:
 			print("Print all mode on!")
-		if size is None or vertices is None or bots is None:
-			self.size = presetSize
-			self.vertices = presetVertices
+		
+		if bots is None:
 			pursuer1 = PhantomBot(printAll=False, pos=[0,0])
 			pursuer2 = PhantomBot(printAll=False, pos=[0,2])
 			pursuer3 = PhantomBot(printAll=False, pos=[0,4])
-			pursuer4 = PhantomBot(printAll=False, pos=[0,6])
+			# pursuer4 = PhantomBot(printAll=False, pos=[0,6])
 			pacmanBot = PhantomBot(printAll=False, pos=[5, 5], pacman=True, speed=1.2)
-			self.bots = [pursuer1, pursuer2, pursuer3, pursuer4, pacmanBot]
-			if (self.printAll):
-				print("Using preset size/edges/bots!")
+			self.bots = [pursuer1, pursuer2, pursuer3, pacmanBot]
+		else:
+			self.bots = bots
+		
+		if size is None:
+			self.size = presetSize
 		else:
 			self.size = size
-			self.vertices = vertices
-			self.bots = bots
-			if (self.printAll):
-				print("Using grid of size " + str(self.size))
 
+		self.vertices = presetVertices
 		self.verticeMatrix = np.zeros(self.size)
 		self.set_vertice_matrix()
 		self.occupiedVertices = []
@@ -571,6 +570,8 @@ class Environment:
 		:return:
 		"""
 		history = np.array(self.history)
+		if not os.path.exists('animations/{}'.format(out_dir)):
+			os.mkdir('animations/{}'.format(out_dir))
 		
 		# Format: list containing tuples (or lists) of coordinates, where idx 0 is target, idx 1.. are hunters
 		fig = plt.figure(figsize=(8,8))
@@ -602,6 +603,7 @@ class Environment:
 			out = 'animations/{}/{}-{}-{}.mp4'.format(out_dir, radius, epoch, time.time())
 
 		anim.save(out, writer='ffmpeg')
+		print("Animation saved to {}".format(out))
 	
 	
 	def first_motion(self):

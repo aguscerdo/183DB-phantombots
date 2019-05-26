@@ -69,8 +69,11 @@ import environment
 
 
 class BaseLine:
-    def __init__(self):
-        self.env = environment.Environment()
+    def __init__(self, env=None):
+        if env is None:
+            self.env = environment.Environment()
+        else:
+            self.env = env
     
     
     def target_move(self):
@@ -150,3 +153,11 @@ class BaseLine:
         target_move1, target_move2 = self.target_move()
         
         return pursuer_moves, target_move1, target_move2
+    
+    def run_baseline(self):
+        i = 0
+        while not self.env.win_condition():
+            self.baseline_step()
+            if i % 25 == 0:
+                self.env.plot_grid()
+            i += 1

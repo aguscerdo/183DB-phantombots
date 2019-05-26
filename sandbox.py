@@ -10,5 +10,3 @@ if __name__ == '__main__':
 		if i % 25 == 0:
 			BS1.env.plot_grid()
 		i += 1
-	
-	BS1.env.animate()
