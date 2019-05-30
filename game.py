@@ -82,6 +82,7 @@ class Game:
 
 
 		#actions = self.baseline.env.history_to_actions() #actions = list of actions from (i->i+1)
+		end_states = states[1:]
 		states = states[:-1]  #exclude last state, since we dont have action for last state
 		rewards = rewards[1:]  #exclude reward for start state, since we only want rewards on state i+1 given action i->i+1
 		#TODO: maybe randomly subsample instead of every nth ?
@@ -94,10 +95,11 @@ class Game:
 			states = np.array(states)[rand_arrange]
 			rewards = np.array(rewards)[rand_arrange]
 			actions = np.array(actions)[rand_arrange]
+			end_states = np.array(end_states)[rand_arrange]
 		# only track one bot,
 		if len(actions) == 0:
-			return None, None, None
+			return None, None, None, None
 
 		actions = np.array(actions)
 		actions = actions[:,bot]
-		return states, rewards, actions
+		return states, rewards, actions, end_states

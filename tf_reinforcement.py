@@ -5,20 +5,23 @@ import time
 
 
 class MultiAgentCNN:
-	def __init__(self, name):
+	def __init__(self, name, size=6):
 		self.path = './weights'
 		if not os.path.exists(self.path):
 			os.mkdir(self.path)
 		self.name = name
 		
+		self.i = 0
+		self.epsilon = 0.8
+		self.size = size
+		
 		self.build_network()
 		self.sess = tf.Session()
 		self.sess.run(tf.global_variables_initializer())
-		self.i = 0
 	
 	def build_network(self):
 		with tf.variable_scope(self.name):
-			self.images = tf.placeholder(tf.float32, shape=(None, 11, 11, 3), name='in_image')
+			self.images = tf.placeholder(tf.float32, shape=(None, self.size, self.size, 3), name='in_image')
 			
 			nn = tf.layers.conv2d(inputs=self.images, filters=16,
 			                        kernel_size=[3, 3], padding='same',
@@ -28,11 +31,6 @@ class MultiAgentCNN:
 				nn = self.residual_layer(nn)
 			with tf.variable_scope('residual_2'):
 				nn = self.residual_layer(nn)
-			
-			# with tf.variable_scope('inception_1'):
-			# 	nn = self.inception_layer(nn, False)
-			# with tf.variable_scope('inception_2'):
-			# 	nn = self.inception_layer(nn, False)
 	
 			with tf.variable_scope('fully_connected'):
 				flat = tf.layers.flatten(nn)
@@ -43,13 +41,12 @@ class MultiAgentCNN:
 			self.action_in = tf.placeholder(tf.int32, shape=(None, 1), name='action_in')
 			self.reward_in = tf.placeholder(tf.float32, shape=(None, 1), name='actual_rewards')
 			
-			
 			with tf.variable_scope('loss'):
 				self.gathered_rewards = tf.gather(self.predicted_reward, self.action_in, axis=1)[:, 0, :]
 				self.loss = tf.losses.mean_squared_error(self.reward_in,  self.gathered_rewards)
 				#self.MSE(self.reward_in, self.gathered_rewards)
 			
-			self.opt = tf.train.GradientDescentOptimizer(learning_rate=0.001).minimize(self.loss)
+			self.opt = tf.train.GradientDescentOptimizer(learning_rate=0.0001).minimize(self.loss)
 			tf.summary.scalar('loss', self.loss)
 		
 	
@@ -82,7 +79,7 @@ class MultiAgentCNN:
 	@staticmethod
 	def __inception_layer_helper(layer_in):
 		# 1x1
-		cnn11 = tf.layers.conv2d(inputs=layer_in, filters=32,
+		cnnself.size = tf.layers.conv2d(inputs=layer_in, filters=32,
 	                        kernel_size=[1, 1], padding='same',
 	                        activation='relu')
 			
@@ -106,7 +103,7 @@ class MultiAgentCNN:
 			
 		
 		# Concat
-		concat = tf.concat([cnn11, cnn22, cnn23], axis=-1)
+		concat = tf.concat([cnnself.size, cnn22, cnn23], axis=-1)
 		out = tf.layers.conv2d(inputs=concat, filters=32,
 		                        kernel_size=[1, 1], padding='same',
 		                        activation='relu')
@@ -126,17 +123,30 @@ class MultiAgentCNN:
 		return tf.layers.max_pooling2d(nn, [2, 2], [2, 2])
 		
 	
-	def train(self, tensor_list, reward_list, actions_list, save=False):
-		images = np.asarray(tensor_list)
+	def get_max_value(self, end_tensor_list, reward_list):
 		rewards = np.asarray(reward_list).reshape(-1, 1)
+		end_state = np.asarray(end_tensor_list)
+
+		value = self.sess.run(self.predicted_reward, feed_dict={self.images: end_state})
+		value = np.array(np.max(value, axis=1)).reshape((-1, 1))
+		return rewards * self.epsilon + value
+	
+	
+	def train(self, tensor_list, reward_list, actions_list, end_tensor_list, save=False):
+		images = np.asarray(tensor_list)
 		actions = np.asarray(actions_list).reshape(-1, 1)
+		
+		values = self.get_max_value(end_tensor_list, reward_list)
 
 		batch_size = 32
-		num_samples = len(rewards)
+		num_samples = len(values)
 		
 		aranged = np.arange(num_samples)
 		
 		np.random.shuffle(aranged)
+		sampled_images = []
+		sampled_values = []
+		sampled_actions = []
 		
 		for i in range(num_samples // batch_size):
 			if i * batch_size > 15000:
@@ -144,17 +154,16 @@ class MultiAgentCNN:
 			getter = aranged[i*batch_size:(i+1)*batch_size]
 			
 			sampled_images = images[getter]
-			sampled_rewards = rewards[getter]
+			sampled_values = values[getter]
 			sampled_actions = actions[getter]
 			
-			while sampled_images.shape[1] != 11 or sampled_images.shape[2] != 11 or sampled_images.shape[3] != 3:
+			while sampled_images.shape[1] != self.size or sampled_images.shape[2] != self.size or sampled_images.shape[3] != 3:
 				sampled_images = sampled_images.transpose((0, 2, 3, 1))
-				
 
 			self.sess.run(self.opt,
 			              feed_dict={
 				              self.images: sampled_images,
-				              self.reward_in: sampled_rewards,
+				              self.reward_in: sampled_values,
 				              self.action_in: sampled_actions,
 			              })
 	
@@ -163,9 +172,9 @@ class MultiAgentCNN:
 		
 		return self.sess.run(self.loss,
 		                     feed_dict={
-				              self.images: images,
-				              self.reward_in: rewards,
-				              self.action_in: actions,
+				              self.images: sampled_images,
+				              self.reward_in: sampled_values,
+				              self.action_in: sampled_actions,
 			              })
 		
 
@@ -185,8 +194,8 @@ class MultiAgentCNN:
 		if len(tensor.shape) == 3:
 			tensor = tensor.reshape((1, -3, -2, -1))
 			
-		while tensor.shape[1] != 11 or tensor.shape[2] != 11 or tensor.shape[3] != 3:
-			tensor = tensor.transpose((0, 3, 2, 1))
+		while tensor.shape[1] != self.size or tensor.shape[2] != self.size or tensor.shape[3] != 3:
+			tensor = tensor.transpose((0, 3, 1, 2))
 			
 		out = self.sess.run(self.predicted_reward,
 		              feed_dict={
@@ -206,39 +215,39 @@ class MultiAgentCNN:
 		print("Restored model at: {}".format(path))
 	
 	
-if __name__ == '__main__':
-	pass
-	
-	m = MultiAgentCNN()
-	
-	# batch_in = [
-	# 	[
-	# 		[[1, 0, 0, 0],
-	# 		 [0, 0, 0, 0],
-	# 		 [0, 0, 0, 0],
-	# 		 [0, 0, 0, 0]],
-	# 		[[1, 0, 1, 0],
-	# 		 [1, 0, 0, 0],
-	# 		 [0, 0, 0, 0],
-	# 		 [0, 0, 0, 0]],
-	# 		[[0, 0, 0, 0],
-	# 		 [0, 0, 0, 0],
-	# 		 [0, 1, 0, 0],
-	# 		 [0, 0, 0, 0]],
-	# 		[[1, 0, 0, 0],
-	# 		 [1, 0, 0, 0],
-	# 		 [1, 1, 1, 0],
-	# 		 [0, 0, 0, 0]]
-	# 	]
-	# ]
-	
-	batch_in = np.random.randint(0, 1, size=(1, 11, 11, 4))
-
-	reward = [[-3.4351]]
-	action = [1]
-	
-	# out = m.predict(batch_in, 0.3)
-	m.train(batch_in, reward, action, save=True)
-	m.load()
+# if __name__ == '__main__':
+# 	pass
+#
+# 	m = MultiAgentCNN()
+#
+# 	# batch_in = [
+# 	# 	[
+# 	# 		[[1, 0, 0, 0],
+# 	# 		 [0, 0, 0, 0],
+# 	# 		 [0, 0, 0, 0],
+# 	# 		 [0, 0, 0, 0]],
+# 	# 		[[1, 0, 1, 0],
+# 	# 		 [1, 0, 0, 0],
+# 	# 		 [0, 0, 0, 0],
+# 	# 		 [0, 0, 0, 0]],
+# 	# 		[[0, 0, 0, 0],
+# 	# 		 [0, 0, 0, 0],
+# 	# 		 [0, 1, 0, 0],
+# 	# 		 [0, 0, 0, 0]],
+# 	# 		[[1, 0, 0, 0],
+# 	# 		 [1, 0, 0, 0],
+# 	# 		 [1, 1, 1, 0],
+# 	# 		 [0, 0, 0, 0]]
+# 	# 	]
+# 	# ]
+#
+# 	batch_in = np.random.randint(0, 1, size=(1, self.size, self.size, 4))
+#
+# 	reward = [[-3.4351]]
+# 	action = [1]
+#
+# 	# out = m.predict(batch_in, 0.3)
+# 	m.train(batch_in, reward, action, save=True)
+# 	m.load()
 
 	

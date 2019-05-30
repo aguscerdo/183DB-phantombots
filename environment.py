@@ -22,9 +22,10 @@ import time
 import itertools
 import os
 
-presetSize = [11, 11]
+presetSize = [4, 4]
 presetVertices = []
-with open('map.csv') as csvfile:
+file = "4x4.csv"
+with open(file) as csvfile:
 	readCSV = csv.reader(csvfile, delimiter=",")
 	for row in readCSV:
 		x_val = int(row[0])
@@ -47,11 +48,11 @@ class Environment:
 		
 		if bots is None:
 			pursuer1 = PhantomBot(printAll=False, pos=[0,0])
-			pursuer2 = PhantomBot(printAll=False, pos=[0,2])
-			pursuer3 = PhantomBot(printAll=False, pos=[0,4])
+			pursuer2 = PhantomBot(printAll=False, pos=[0,1])
+			# pursuer3 = PhantomBot(printAll=False, pos=[0,4])
 			# pursuer4 = PhantomBot(printAll=False, pos=[0,6])
-			pacmanBot = PhantomBot(printAll=False, pos=[5, 5], pacman=True, speed=1.2)
-			self.bots = [pursuer1, pursuer2, pursuer3, pacmanBot]
+			pacmanBot = PhantomBot(printAll=False, pos=[3, 3], pacman=True, speed=1)
+			self.bots = [pursuer1, pursuer2, pacmanBot]
 		else:
 			self.bots = bots
 		
@@ -69,7 +70,7 @@ class Environment:
 			self.occupiedVertices.append(bot.get_position())
 			self.history.append([bot.get_position()])
 		
-		self.reward_win = 100
+		self.reward_win = 10
 		self.starting_positions = [ bot.get_position() for bot in self.bots ]
 		
 
@@ -841,6 +842,7 @@ class Environment:
 			self.move(i, self.starting_positions[i])
 		self.reset_history()
 
-env = Environment()
-env.rand_initialise_within_radius(3, 4, [0,0], 1)
-env.plot_grid()
+
+# env = Environment()
+# env.rand_initialise_within_radius(3, 4, [0,0], 1)
+# env.plot_grid()

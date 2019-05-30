@@ -80,7 +80,7 @@ class MDPSim:
 					for xy in self.adjacents(x, y):
 						if not (0 <= xy[0] < self.size) or not (0 <= xy[1] < self.size):
 							continue
-						qvalue = self.value_prev[xy[0], xy[1]] * eps + self.env.reward(xy[0], xy[1])
+						qvalue = self.value_prev[xy[0], xy[1]] * eps + self.env.reward(x, y)
 						ql.append(qvalue)
 					
 					self.value[x, y] = np.max(ql)
@@ -101,7 +101,7 @@ class MDPSim:
 
 def main():
 	
-	mdp = MDPSim(100)
+	mdp = MDPSim(4)
 	
 	mdp.iteration(1000)
 	mdp.print("Final")

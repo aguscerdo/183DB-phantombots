@@ -161,3 +161,11 @@ class BaseLine:
             if i % 25 == 0:
                 self.env.plot_grid()
             i += 1
+    
+    def set_run_return(self, bot_pos):
+        for i, b in enumerate(bot_pos):
+            self.env.bots[i].move((b[0], b[1]))
+        
+        pm, tm1, tm2 = self.baseline_moves()
+        
+        return pm + [tm1]
