@@ -62,24 +62,24 @@ class MultiAgentCNN:
 	
 	@staticmethod
 	def residual_layer(layer_in):
-		cnn1 = tf.layers.conv2d(inputs=layer_in, filters=16,
+		nn = tf.layers.conv2d(inputs=layer_in, filters=16,
 		                        kernel_size=[3, 3], padding='same',
 		                        activation='relu')
 		
-		batch1 = tf.layers.batch_normalization(cnn1)
+		nn = tf.layers.batch_normalization(nn)
 		
-		cnn2 = tf.layers.conv2d(inputs=batch1, filters=16,
+		nn = tf.layers.conv2d(inputs=nn, filters=16,
 		                        kernel_size=[3, 3], padding='same',
 		                        activation=None)
 		
-		concat = tf.concat([layer_in, cnn2], axis=-1)
+		concat = tf.concat([layer_in, nn], axis=-1)
 		return tf.layers.max_pooling2d(concat, [2, 2], [2, 2])
 	
 	
 	@staticmethod
 	def __inception_layer_helper(layer_in):
 		# 1x1
-		cnnself.size = tf.layers.conv2d(inputs=layer_in, filters=32,
+		cnn11 = tf.layers.conv2d(inputs=layer_in, filters=32,
 	                        kernel_size=[1, 1], padding='same',
 	                        activation='relu')
 			
@@ -103,7 +103,7 @@ class MultiAgentCNN:
 			
 		
 		# Concat
-		concat = tf.concat([cnnself.size, cnn22, cnn23], axis=-1)
+		concat = tf.concat([cnn11, cnn22, cnn23], axis=-1)
 		out = tf.layers.conv2d(inputs=concat, filters=32,
 		                        kernel_size=[1, 1], padding='same',
 		                        activation='relu')
@@ -135,7 +135,6 @@ class MultiAgentCNN:
 	def train(self, tensor_list, reward_list, actions_list, end_tensor_list, save=False):
 		images = np.asarray(tensor_list)
 		actions = np.asarray(actions_list).reshape(-1, 1)
-		
 		values = self.get_max_value(end_tensor_list, reward_list)
 
 		batch_size = 32
@@ -144,9 +143,9 @@ class MultiAgentCNN:
 		aranged = np.arange(num_samples)
 		
 		np.random.shuffle(aranged)
-		sampled_images = []
-		sampled_values = []
-		sampled_actions = []
+		sampled_images = images
+		sampled_values = values
+		sampled_actions = actions
 		
 		for i in range(num_samples // batch_size):
 			if i * batch_size > 15000:
@@ -169,6 +168,14 @@ class MultiAgentCNN:
 	
 		if save:
 			self.save()
+		
+		rand_sample = np.arange(num_samples // 2)
+		np.random.shuffle(rand_sample)
+		
+		sampled_actions = actions[rand_sample]
+		sampled_images = images[rand_sample]
+		sampled_values = values[rand_sample]
+
 		
 		return self.sess.run(self.loss,
 		                     feed_dict={
@@ -215,39 +222,20 @@ class MultiAgentCNN:
 		print("Restored model at: {}".format(path))
 	
 	
-# if __name__ == '__main__':
-# 	pass
-#
-# 	m = MultiAgentCNN()
-#
-# 	# batch_in = [
-# 	# 	[
-# 	# 		[[1, 0, 0, 0],
-# 	# 		 [0, 0, 0, 0],
-# 	# 		 [0, 0, 0, 0],
-# 	# 		 [0, 0, 0, 0]],
-# 	# 		[[1, 0, 1, 0],
-# 	# 		 [1, 0, 0, 0],
-# 	# 		 [0, 0, 0, 0],
-# 	# 		 [0, 0, 0, 0]],
-# 	# 		[[0, 0, 0, 0],
-# 	# 		 [0, 0, 0, 0],
-# 	# 		 [0, 1, 0, 0],
-# 	# 		 [0, 0, 0, 0]],
-# 	# 		[[1, 0, 0, 0],
-# 	# 		 [1, 0, 0, 0],
-# 	# 		 [1, 1, 1, 0],
-# 	# 		 [0, 0, 0, 0]]
-# 	# 	]
-# 	# ]
-#
-# 	batch_in = np.random.randint(0, 1, size=(1, self.size, self.size, 4))
-#
-# 	reward = [[-3.4351]]
-# 	action = [1]
-#
-# 	# out = m.predict(batch_in, 0.3)
-# 	m.train(batch_in, reward, action, save=True)
-# 	m.load()
+if __name__ == '__main__':
+	pass
+	size = 6
+	l = 10
+	
+	m = MultiAgentCNN(name="Base0", size=size)
+
+	batch_in = np.random.randint(0, 1, size=(l, size, size, 3))
+
+	reward = np.random.uniform(size=(1, l-1))
+	action = np.random.randint(0, 4, size=(1, l-1))
+
+	# out = m.predict(batch_in, 0.3)
+	m.train(batch_in[1:], reward, action, batch_in[:-1], save=True)
+	m.load()
 
 	

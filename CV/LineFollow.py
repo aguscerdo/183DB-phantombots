@@ -2,8 +2,7 @@ import cv2
 import numpy as np
 import time
 import cv2.aruco as aruco
-import settings
-from math import pi as PI
+from CV import settings
 from math import *
 import math
 
@@ -67,7 +66,7 @@ def Follow():
                             settings.CornerPositions[3] = [Tempx, Tempy]
 
     #get all vertices:
-    lowest_sum =  settings.CornerPositions[0][0] +  settings.CornerPositions[0][1]
+    lowest_sum = settings.CornerPositions[0][0] + settings.CornerPositions[0][1]
     highest_sum = lowest_sum
     bottom_right = settings.CornerPositions[0]
     bottom_left = settings.CornerPositions[0]
@@ -96,7 +95,7 @@ def Follow():
     if bottom_left[0] > top_right[0]:
         bottom_left, top_right = top_right, bottom_left
     N = 3
-    settings.Grid = np.zeros((N,N, 2))
+    settings.Grid = np.zeros((N, N, 2))
     hx = (top_left[0] - bottom_right[0])/(N - 1)
     hy = (top_left[1] - bottom_right[1])/(N - 1)
     for i in range(N):
@@ -162,10 +161,10 @@ def Follow():
                         index = 3
 
                     settings.RobotState[index][0] = corners[x][0][0][0] + corners[x][0][1][0] + corners[x][0][2][0] + \
-                                       corners[x][0][3][0]
+                                                    corners[x][0][3][0]
                     settings.RobotState[index][0] = settings.RobotState[index][0] / 4;
                     settings.RobotState[index][1] = corners[x][0][0][1] + corners[x][0][1][1] + corners[x][0][2][1] + \
-                                       corners[x][0][3][1]
+                                                    corners[x][0][3][1]
                     settings.RobotState[index][1] = settings.RobotState[index][1] / 4;
 
 

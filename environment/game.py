@@ -1,5 +1,4 @@
-import environment
-import baseline1
+from baselines import baseline1
 import numpy as np
 class Game:
 	def __init__(self):

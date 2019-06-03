@@ -1,7 +1,6 @@
-from tf_reinforcement import MultiAgentCNN
 from environment import Environment
 import numpy as np
-from baseline1 import BaseLine
+from baselines import BaseLine
 
 
 class TfSimulator:
@@ -92,9 +91,10 @@ class TfSimulator:
 		
 		if subsample > 0:
 			step = int(subsample)
-			states = states[::step]
-			rewards = rewards[::step]
-			actions = actions[::step]
+			states = states[::step] + states[-1]
+			rewards = rewards[::step] + rewards[-1]
+			actions = actions[::step] + actions[-1]
+			end_states = end_states[::step] + end_states[-1]
 		# only track one bot,
 		if len(actions) == 0:
 			return None, None, None, None
@@ -103,7 +103,7 @@ class TfSimulator:
 
 
 	def run_and_plot(self, dir, epoch, radius=5):
-		self.env.rand_initialise_within_radius(radius, 3, [5, 5])
+		self.env.rand_initialise_within_radius(radius, 3, [0, 0])
 		self.run_simulation(0, 30)
 		self.env.animate(dir, epoch, radius)
 		print("Animating...")

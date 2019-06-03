@@ -1,5 +1,4 @@
-import environment
-import baseline1
+from baselines import baseline1
 
 if __name__ == '__main__':
 	BS1 = baseline1.BaseLine()

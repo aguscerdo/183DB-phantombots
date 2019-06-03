@@ -1,10 +1,7 @@
-from environment import Environment
-from tf_reinforcement import MultiAgentCNN
+from ML import MultiAgentCNN, TfSimulator
 import numpy as np
-from game import Game
+from environment import Game
 import matplotlib.pyplot as plt
-from tf_simulator import TfSimulator
-import os
 from time import time
 
 def main():
@@ -16,21 +13,22 @@ def main():
 
 	epochs = 100
 	sim_per_epoch = 20
-	re_sim_per_epoch = 5
 	steps_per_run = 25
 	
-	memory_size = 40000
+	memory_size = 20000
 
-	subsample = 1
+	subsample = 2
 
-	epsilon = 1.
-	base_cap = 0.   # TODO set to 0 for now
+	epsilon = 1.2
+	base_cap = 1
+	
+	saver = 1000
 	
 	run_dir = '{}_{}_{}_{}'.format(time(), epochs, sim_per_epoch, steps_per_run)
 	print('Saving to {}'.format(run_dir))
 	#os.mkdir('animations/'+run_dir)
 	
-	decay = (1 - 5e-5)
+	decay = (1 - 6e-5)
 	decayer = 1.
 
 	loss_history = []
@@ -43,12 +41,12 @@ def main():
 	total_steps_performed = 0
 	
 	# Run epochs until 2.5M examples have been visited
-	for ep in range(epochs*1000):
-		decayer = 1.
-		if total_steps_performed > 4000000:
-			break
-		for radius in range(1, 10):
-			print("EPOCH {} ---- Radius {}".format(ep,radius))
+	
+	for radius in range(1, 4):
+		for ep in range(epochs):
+			decayer = 1.
+			if total_steps_performed > 4000000:
+				break
 			states = []
 			rewards = []
 			actions = []
@@ -58,53 +56,37 @@ def main():
 				# print("\tRun {}".format(sim))
 				n_bots = (sim % 3 + 2) % len(ml_simulator.env.bots)
 				
-				
 				# Initialize randomly target
 				pos = ml_simulator.env.rand_position()
 				ml_simulator.env.rand_initialise_within_radius(radius, n_bots, pos, bot_on_radius=True)
 				
-				replay_rewards = []
-				replay_actions = []
-				replay_states  = []
-				replay_end_states = []
+				decayer *= decay
+				base_cap0 = base_cap * decayer
+				
+				if len(memory_rewards) > memory_size / 2:
+					epsilon = epsilon * decay
+				
+				# Baseline vs Model
+				#if np.random.uniform(0, 1) < :
+				if np.random.uniform(0, 1) < base_cap0:
+					s, r, a, e_s = game.get_simulation_history(bot=0, N=steps_per_run, subsample=subsample)
+				else:
+					s, r, a, e_s = ml_simulator.run_simulation(0, steps_per_run, subsample=subsample, epsilon=epsilon)
 
-				for re_sim in range(re_sim_per_epoch):
-					ml_simulator.env.back_to_start()
-					
-					# Variable decay for baseline
-					decayer *= decay
-					base_cap0 = base_cap * decayer
-					
-					if len(memory_rewards) > 40000:
-						epsilon = epsilon * decay
-					
-					# Baseline vs Model
-					#if np.random.uniform(0, 1) < :
-					if np.random.uniform(0, 1) < base_cap0:
-						s, r, a, e_s = game.get_simulation_history(bot=0, N=steps_per_run, subsample=subsample)
+				if s is None or r is None or a is None:
+					continue
 
-					else:
-						s, r, a, e_s = ml_simulator.run_simulation(0, steps_per_run, subsample=subsample, epsilon=epsilon)
-
-					if s is None or r is None or a is None:
-						continue
-
-					s = np.asarray(s)
-					r = np.asarray(r)
-					a = np.asarray(a)
-					e_s = np.asarray(e_s)
-
-					replay_states.append(s)
-					replay_rewards.append(r)
-					replay_actions.append(a)
-					replay_end_states.append(e_s)
+				s = np.asarray(s)
+				r = np.asarray(r)
+				a = np.asarray(a)
+				e_s = np.asarray(e_s)
 					
 				# Soft training
 				try:
-					statesTrain = np.concatenate(replay_states, axis=0)
-					rewardsTrain = np.concatenate(replay_rewards, axis=0)
-					actionsTrain = np.concatenate(replay_actions, axis=0)
-					endStateTrain = np.concatenate(replay_end_states, axis=0)
+					statesTrain = np.concatenate(s, axis=0)
+					rewardsTrain = np.concatenate(r, axis=0)
+					actionsTrain = np.concatenate(a, axis=0)
+					endStateTrain = np.concatenate(e_s, axis=0)
 					
 					if statesTrain.shape[1:] != (env_size, env_size, 3):
 						statesTrain = statesTrain.transpose((0, 2, 3, 1))
@@ -114,11 +96,10 @@ def main():
 					ml_simulator.model.train(statesTrain, rewardsTrain, actionsTrain, endStateTrain)
 					
 					# Expand memory DB
-					rewards += replay_rewards
-					actions += replay_actions
-					states += replay_states
-					end_states += replay_end_states
-				
+					rewards += [s]
+					actions += [r]
+					states += [s]
+					end_states += [e_s]
 				except Exception as e:
 					# print("Error:", e)
 					continue
@@ -165,7 +146,10 @@ def main():
 				endStateTrain = endStateTrain.transpose((0, 2, 3, 1))
 
 			# Hard training
-			save = (ep + radius % 5 == 0)
+			save = (total_steps_performed > saver)
+			if save:
+				saver += 2500
+				
 			print("\t- Memory Training...")
 			loss = ml_simulator.model.train(statesTrain, rewardsTrain, actionsTrain, endStateTrain, save=save)
 			print('\tLoss: {}'.format(loss))

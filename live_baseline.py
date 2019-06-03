@@ -1,6 +1,5 @@
-from environment import Environment
-from phantomBot import PhantomBot
-import baseline1 as bs1
+from environment import Environment, PhantomBot
+from baselines import baseline1 as bs1
 import numpy as np
 
 def main(bot_pos, target_pos):

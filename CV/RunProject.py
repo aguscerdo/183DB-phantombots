@@ -1,18 +1,11 @@
 
 import threading
 import time
-import cv2
-import numpy as np
-import argparse
-import imutils
-import time
-import copy
 import math
-from math import pi as PI
 from math import *
-from LineFollow import Follow
-import settings
-from socket_wrapper import SocketWrapper
+from CV.LineFollow import Follow
+from CV import settings
+from CV.socket_wrapper import SocketWrapper
 
 #TODO These need to be static IP addresses so we dont have to keep changing them
 #needs to be changed on the arduino IDE
@@ -130,7 +123,7 @@ def dist(start, end):
 
 def goto1( x,y ):
     error = 20
-    desired_h = getAngleBetweenPoints(settings.RobotState[0][0],settings.RobotState[0][1] ,x,y )
+    desired_h = getAngleBetweenPoints(settings.RobotState[0][0], settings.RobotState[0][1], x, y)
     desired_h = math.degrees(desired_h)
     print("desired", desired_h)
     print("actual", settings.RobotState[0][2])
@@ -309,7 +302,7 @@ class Thread_B(threading.Thread):
                 desired_y = settings.CornerPositions[0][1]
             """
 
-            desired_x, desired_y = settings.Grid[i][j][0],  settings.Grid[i][j][1]
+            desired_x, desired_y = settings.Grid[i][j][0], settings.Grid[i][j][1]
             self.step = (self.step + 1) % 8
 
             #move

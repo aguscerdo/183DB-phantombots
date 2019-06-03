@@ -10,21 +10,19 @@ use play_round. If it returns false, then your moves were illegal and nothing wo
 If there is supposed to be a double_move for pacman, input it in play_round.
 Examples on how to move are below (first_motion, psuedo_rand_motion)
 """
-import matplotlib
 # matplotlib.use('TkAgg')
 import matplotlib.pyplot as plt
 from matplotlib.animation import FuncAnimation
 import numpy as np
-from phantomBot import PhantomBot
+from environment import PhantomBot
 import csv
-import baseline1 as bs1
 import time
 import itertools
 import os
 
 presetSize = [4, 4]
 presetVertices = []
-file = "4x4.csv"
+file = "maps/4x4.csv"
 with open(file) as csvfile:
 	readCSV = csv.reader(csvfile, delimiter=",")
 	for row in readCSV:
