@@ -20,18 +20,6 @@ import time
 import itertools
 import os
 
-presetSize = [4, 4]
-presetVertices = []
-file = "maps/4x4.csv"
-with open(file) as csvfile:
-	readCSV = csv.reader(csvfile, delimiter=",")
-	for row in readCSV:
-		x_val = int(row[0])
-		y_val = int(row[1])
-		presetVertices.append([x_val,y_val])
-
-
-
 
 # for i in range(presetSize[0]):
 # 	for j in range(presetSize[1]):
@@ -39,7 +27,9 @@ with open(file) as csvfile:
 # 			presetVertices.append([i,j])
 
 class Environment:
-	def __init__(self, nbots=3, printAll=False, size=None, bots=None):
+	def __init__(self, nbots=3, printAll=False, size=None, bots=None, map_path="maps/map.csv"):
+		presetSize, presetVertices = self.load_map(map_path)
+		
 		self.printAll = printAll
 		if self.printAll:
 			print("Print all mode on!")
@@ -52,7 +42,6 @@ class Environment:
 				else:
 					bb = PhantomBot(printAll=False, pos=[0,0])
 				self.bots.append(bb)
-
 		else:
 			self.bots = bots
 		
@@ -72,7 +61,19 @@ class Environment:
 		
 		self.reward_win = 10
 		self.starting_positions = [ bot.get_position() for bot in self.bots ]
-		
+	
+	@staticmethod
+	def load_map(file="maps/map.csv"):
+		presetVertices = []
+		with open(file) as csvfile:
+			readCSV = csv.reader(csvfile, delimiter=",")
+			for row in readCSV:
+				x_val = int(row[0])
+				y_val = int(row[1])
+				presetVertices.append([x_val, y_val])
+		mmax = np.max(presetVertices) + 1
+		presetSize = [mmax, mmax]
+		return presetSize, presetVertices
 
 	def set_vertice_matrix(self):
 		"""

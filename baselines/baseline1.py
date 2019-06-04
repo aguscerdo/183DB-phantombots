@@ -2,72 +2,6 @@ import matplotlib
 import numpy as np
 import environment
 
-
-# class BS1:
-#     def __init__(self, env):
-#         self.env = env
-#
-#     def evaderAlg(self, pos):
-#         while (not self.env.win_condition()): #while game is not over
-#             adj = self.env.adjacent(pos)  #find all adjacent spots
-#             for spots in adj:       #determine actual legal spots from adjacent spots
-#                 if self.env.legal_move_pos(pos, spots) is 0:
-#                     adj.remove(spots)
-#             listOfDistances = []    #list of list of distances
-#             for spot in adj:    #find distances from each bot to spot
-#                 distances = []
-#                 for bot in range(len(self.env.bots)-1):
-#                     distances.append(self.env.dist(spot,self.env.bots[bot].get_position()))
-#                 listOfDistances.append((distances))
-#             minDistances = []
-#             for item in listOfDistances:
-#                 minDistances.append(min(item))
-#             maxMin = 0
-#             for i in range(len(minDistances)):
-#                 if minDistances[i] < minDistances[maxMin]:
-#                     maxMin = i
-#             return adj[maxMin]
-#
-#
-#     def pursuerAlg(self, pos):   #pass in list of initial position of pursuer bots
-#         pursuerMoves = []
-#         while (not self.env.win_condition()): #while game is not over
-#             for i in range(0, len(self.env.bots)-1):    #run for each pursuer
-#                 adj = self.env.adjacent(pos[i])
-#                 for spots in adj:
-#                     if self.env.legal_move_pos(pos[i], spots) == 0:
-#                         adj.remove(spots)   #remove spot if not valid
-#                 distances = []
-#                 for spot in adj:
-#                     distances.append() #find distance of spot to pacman
-#                 mmin = 0
-#                 for j in range(len(distances)):
-#                     if distances[j] < distances[mmin]:   #determine min distance
-#                         mmin = j
-#                 pursuerMoves.append(adj[mmin])
-#
-#             return pursuerMoves
-#         return []
-
-
-# def baseline_motion(self):
-#     pursuer_pos = []
-#     evader = self.bots[-1]
-#     evader_pos = evader.get_position()
-#     evader_second_move = None
-#     # for i in range(0, len(self.bots)-1):
-#     #     pursuer_pos.append(self.bots[i].get_position())
-#     pursuer_moves = self.bs1.pursuerAlg(pursuer_pos)
-#     evader_move = self.bs1.evaderAlg(evader_pos)
-#     if evader.double_move():
-#         evader_second_move = self.bs1.evaderAlg((evader.get_position()))
-#     if self.play_round(pursuer_moves, evader_move, evader_second_move):
-#         return True    #we moved!
-#     print ("err!!")
-#     return False
-
-
-
 class BaseLine:
     def __init__(self, env=None, nbots=3):
         if env is None:
@@ -154,9 +88,10 @@ class BaseLine:
         
         return pursuer_moves, target_move1, target_move2
     
-    def run_baseline(self):
+    def run_baseline(self,rand=False):
         i = 0
-        self.env.rand_initialise()
+        if rand:
+            self.env.rand_initialise()
         while not self.env.win_condition():
             self.baseline_step()
             if i % 25 == 0:
@@ -170,3 +105,72 @@ class BaseLine:
         pm, tm1, tm2 = self.baseline_moves()
         
         return pm + [tm1]
+    
+
+
+
+
+
+# --- Archive ---#
+# class BS1:
+#     def __init__(self, env):
+#         self.env = env
+#
+#     def evaderAlg(self, pos):
+#         while (not self.env.win_condition()): #while game is not over
+#             adj = self.env.adjacent(pos)  #find all adjacent spots
+#             for spots in adj:       #determine actual legal spots from adjacent spots
+#                 if self.env.legal_move_pos(pos, spots) is 0:
+#                     adj.remove(spots)
+#             listOfDistances = []    #list of list of distances
+#             for spot in adj:    #find distances from each bot to spot
+#                 distances = []
+#                 for bot in range(len(self.env.bots)-1):
+#                     distances.append(self.env.dist(spot,self.env.bots[bot].get_position()))
+#                 listOfDistances.append((distances))
+#             minDistances = []
+#             for item in listOfDistances:
+#                 minDistances.append(min(item))
+#             maxMin = 0
+#             for i in range(len(minDistances)):
+#                 if minDistances[i] < minDistances[maxMin]:
+#                     maxMin = i
+#             return adj[maxMin]
+#
+#
+#     def pursuerAlg(self, pos):   #pass in list of initial position of pursuer bots
+#         pursuerMoves = []
+#         while (not self.env.win_condition()): #while game is not over
+#             for i in range(0, len(self.env.bots)-1):    #run for each pursuer
+#                 adj = self.env.adjacent(pos[i])
+#                 for spots in adj:
+#                     if self.env.legal_move_pos(pos[i], spots) == 0:
+#                         adj.remove(spots)   #remove spot if not valid
+#                 distances = []
+#                 for spot in adj:
+#                     distances.append() #find distance of spot to pacman
+#                 mmin = 0
+#                 for j in range(len(distances)):
+#                     if distances[j] < distances[mmin]:   #determine min distance
+#                         mmin = j
+#                 pursuerMoves.append(adj[mmin])
+#
+#             return pursuerMoves
+#         return []
+
+
+# def baseline_motion(self):
+#     pursuer_pos = []
+#     evader = self.bots[-1]
+#     evader_pos = evader.get_position()
+#     evader_second_move = None
+#     # for i in range(0, len(self.bots)-1):
+#     #     pursuer_pos.append(self.bots[i].get_position())
+#     pursuer_moves = self.bs1.pursuerAlg(pursuer_pos)
+#     evader_move = self.bs1.evaderAlg(evader_pos)
+#     if evader.double_move():
+#         evader_second_move = self.bs1.evaderAlg((evader.get_position()))
+#     if self.play_round(pursuer_moves, evader_move, evader_second_move):
+#         return True    #we moved!
+#     print ("err!!")
+#     return False
