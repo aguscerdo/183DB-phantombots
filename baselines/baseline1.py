@@ -69,9 +69,9 @@ import environment
 
 
 class BaseLine:
-    def __init__(self, env=None):
+    def __init__(self, env=None, nbots=3):
         if env is None:
-            self.env = environment.Environment()
+            self.env = environment.Environment(nbots=nbots)
         else:
             self.env = env
     
@@ -156,6 +156,7 @@ class BaseLine:
     
     def run_baseline(self):
         i = 0
+        self.env.rand_initialise()
         while not self.env.win_condition():
             self.baseline_step()
             if i % 25 == 0:

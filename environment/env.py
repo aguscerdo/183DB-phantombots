@@ -14,7 +14,7 @@ Examples on how to move are below (first_motion, psuedo_rand_motion)
 import matplotlib.pyplot as plt
 from matplotlib.animation import FuncAnimation
 import numpy as np
-from environment import PhantomBot
+from environment.phantomBot import PhantomBot
 import csv
 import time
 import itertools
@@ -39,18 +39,20 @@ with open(file) as csvfile:
 # 			presetVertices.append([i,j])
 
 class Environment:
-	def __init__(self, printAll=False, size=None, bots=None):
+	def __init__(self, nbots=3, printAll=False, size=None, bots=None):
 		self.printAll = printAll
 		if self.printAll:
 			print("Print all mode on!")
 		
 		if bots is None:
-			pursuer1 = PhantomBot(printAll=False, pos=[0,0])
-			pursuer2 = PhantomBot(printAll=False, pos=[0,1])
-			# pursuer3 = PhantomBot(printAll=False, pos=[0,4])
-			# pursuer4 = PhantomBot(printAll=False, pos=[0,6])
-			pacmanBot = PhantomBot(printAll=False, pos=[3, 3], pacman=True, speed=1)
-			self.bots = [pursuer1, pursuer2, pacmanBot]
+			self.bots = []
+			for i, b in enumerate(range(nbots)):
+				if i == nbots-1:
+					bb = PhantomBot(printAll=False, pos=[3, 3], pacman=True, speed=1.2)
+				else:
+					bb = PhantomBot(printAll=False, pos=[0,0])
+				self.bots.append(bb)
+
 		else:
 			self.bots = bots
 		

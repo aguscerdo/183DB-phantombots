@@ -9,7 +9,7 @@ def main():
 	env_size = 4
 	m = MultiAgentCNN("pursuers", env_size)
 	# target_m = MultiAgentCNN("target")
-	ml_simulator = TfSimulator(m)#, target_m)
+	ml_simulator = TfSimulator(4, m)#, target_m)
 
 	epochs = 100
 	sim_per_epoch = 20
