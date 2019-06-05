@@ -102,11 +102,43 @@ class MDPSim:
 			states.append(self.botsToIndex(bot_poses))
 		return states
 	
-	def legal_spot(self, pos, bot_num):
+	def legal_state(self, bot_positions):
+		for bot in bot_positions:
+			if not self.legal_spot(bot):
+				return False
+		for i in range(len(bot_positions)-1):
+			for j in range(i):
+				if bot_positions[j][0] == bot_positions[i][0] and  bot_positions[j][1] == bot_positions[i][1]:
+					return False
+		return True
+
+	def legal_spot(self, pos):
 		px, py = pos
 		if (0 <= px < self.size and 0 <= py < self.size):
 			return (self.env.verticeMatrix[px][py] == 1)
-				
+			
+	def legal_transition(self, bot_positions1, bot_positions2):
+		# illegal if 
+		# 1: 2 bots swap locations
+		for i in range(len(bot_positions1)):
+			for j in range(len(bot_positions1)):
+				if i != j:
+					if (bot_positions1[i][0] == bot_positions2[j][0] and  bot_positions1[i][1] == bot_positions2[j][1]):
+						if (bot_positions1[j][0] == bot_positions2[i][0] and  bot_positions1[j][1] == bot_positions2[i][1]):
+							return False
+
+		# 2: 2 pursuers start/end in same location
+		if not self.legal_state(bot_positions1):
+			return False
+		if not self.legal_state(bot_positions2):
+			return False
+		# 3: if game over in pos1, game  over in pos2
+		if self.simple_reward(bot_positions1) == 1:
+			if self.simple_reward(bot_positions2) == 0:
+				return False
+		return True
+
+		
 
 	def target_seperated_positions(self, bot_positions):
 		all_adjacents = []
@@ -116,7 +148,7 @@ class MDPSim:
 			adjs = []
 			adj = self.adjacents(x,y)
 			for pos in adj:
-				if self.legal_spot(pos, i):
+				if self.legal_spot(pos):
 					adjs.append(pos)
 			all_adjacents.append(adjs)
 		puruser_possibles = itertools.product(*all_adjacents)
@@ -128,7 +160,7 @@ class MDPSim:
 		target_possibles = []
 		adj = self.adjacents(tx,ty)
 		for pos in adj:
-			if self.legal_spot(pos, self.num_bots-1):
+			if self.legal_spot(pos):
 				target_possibles.append(pos)
 		target_seperates = []
 		for pos in target_possibles:
@@ -149,7 +181,8 @@ class MDPSim:
 			(x, y+1),
 			(x+1, y),
 			(x, y-1),
-			(x-1, y)
+			(x-1, y),
+			(x, y)
 		]
 		
 		return spots
@@ -168,6 +201,7 @@ class MDPSim:
 		breaker = False
 		prev = 0
 		tx, ty = self.target
+		printed = False
 		for i in range(n): #loop up to n times
 			if breaker:
 				break
@@ -176,25 +210,49 @@ class MDPSim:
 			for s in range(len(self.value)): #loop over all states
 				bot_positions = self.linearToBots(s)
 				# if legal state:
-				legal_state = True
-				for bot in bot_positions:
-					if not self.legal_spot(bot, -2):
-						legal_state = False
-				if legal_state:
+				if self.legal_state(bot_positions):
+					debug_prints = False
+					if (i > self.size**(self.num_bots) and self.value[s] == 0 and not printed):
+						debug_prints = True
+						printed = True
+						print("Curent state is: " + str(bot_positions))
+						print("in theory this should not happen")
 					next_tsp = self.target_seperated_positions(bot_positions)
 					pursuer_ql = []
 					for fixed_target_pos in next_tsp: # loop over target moves
 						target_ql = []
 						for next_bot_pos in fixed_target_pos: # loop over all pursuer moves for given target move
-							sprime = self.botsToIndex(next_bot_pos)
-							qvalue = self.value_prev[sprime] *eps + self.simple_reward(next_bot_pos)
-							target_ql.append(qvalue)
-						minq = np.min(target_ql)
-						pursuer_ql.append(minq)
-					maxq = np.max(pursuer_ql)
-					self.value[s] = maxq
+							# if legal transition
+							if self.legal_transition(bot_positions, next_bot_pos):
+								
+								sprime = self.botsToIndex(next_bot_pos)
+								r =  self.simple_reward(next_bot_pos)
+								"""
+								if (r > 0):
+									print("s->s' for r>0: ")
+									print(bot_positions)
+									print(next_bot_pos)
+								"""
+								qvalue = self.value_prev[sprime] *eps + r
+								if debug_prints:
+									print("The following transition is legal and gives q: " +str(qvalue))
+									print(next_bot_pos)
+								target_ql.append(qvalue)
+						if debug_prints:
+							print("And target_ql is: " + str(target_ql))
+						if len(target_ql) > 0:
+							maxq = np.max(target_ql)
+							pursuer_ql.append(maxq)
+					if len(pursuer_ql) > 0:
+						minq = np.min(pursuer_ql)
+					else:
+						print("no moves, but not dead state. Check?")
+						if (self.legal_state(self.linearToBots(s))):
+							print("Legal!!")
+						minq = 0
+					self.value[s] = minq
 			ssum = np.sum(self.value)
-			if np.abs(ssum - prev) < 1e-6*len(self.value):
+			if np.abs(ssum - prev) < 1e-5*len(self.value):
 				breaker = True
 			else:
 				prev = ssum
@@ -202,7 +260,29 @@ class MDPSim:
 		print("that took " + str(i) + "iterations")
 	
 	def plot(self, title):
-		print(self.value)
+		#print(self.value)
+		print("These states have 0 value and are legal")
+		count = 0
+		count_legal = 0
+		count_pos = 0
+		count_val_not_reward = 0
+		for i in range(len(self.value)):
+			bot_poses = self.linearToBots(i)
+			if self.value[i] == 0:
+				count = count + 1
+				if self.legal_state(bot_poses):
+					count_legal += 1
+					if count < 100:
+						print(bot_poses)
+			else:
+				count_pos += 1
+				if self.simple_reward(bot_poses) == 0:
+					count_val_not_reward += 1
+
+		print("Num 0-val states is: " + str(count))
+		print("Num 0-val legal states is: " + str(count_legal))
+		print("Num +-val states is: " + str(count_pos))
+		print("Num +-val 0-reward states is: " + str(count_val_not_reward))
 		#plt.imshow(self.value)
 		#plt.colorbar()
 		#plt.show()
@@ -211,12 +291,14 @@ class MDPSim:
 
 def main():
 	size = 4
-	bots = 2
+	#size = 3
+	bots = 3
 	mdp = MDPSim(size, bots)
-	verts = [ [0,0], [0,1], [0,2], [0,3], [1,0], [2,0], [3,0], [3,1], [3,2], [3,3], [2,3] ]
+	verts = [ [0,0], [0,1], [0,2], [0,3], [1,0], [2,0], [3,0], [3,1], [3,2], [3,3], [2,3], [1,3]]
+	#verts = [ [0,0], [0,1], [0,2], [1,0], [2,0], [2,1], [2,2], [1,2]]
+	#verts = [ [0,0], [0,1], [0,2], [1,0], [2,0], [2,1], [2,2], [1,2]]
 	mdp.env.set_vertice_matrix(verts)
-	mdp.iteration(100, 0.8)
-	print(mdp.simple_reward([[1,1], [1,1]]))
+	mdp.iteration(100, 0.5)
 	mdp.plot("Final")
 	#for i in range(size):
 	#	for j in range(size):
