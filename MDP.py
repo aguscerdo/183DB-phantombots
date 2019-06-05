@@ -197,6 +197,45 @@ class MDPSim:
 				return 1
 		return 0
 
+	def next_state(self, bot_positions):
+		#gets next_state from value and current state
+		next_tsp = self.target_seperated_positions(bot_positions)
+		pursuer_ql = []
+		pursuer_ns = []
+		for fixed_target_pos in next_tsp: # loop over target moves
+			target_ql = []
+			target_ns = []
+			for next_bot_pos in fixed_target_pos: # loop over all pursuer moves for given target move
+				# if legal transition
+				if self.legal_transition(bot_positions, next_bot_pos):
+					sprime = self.botsToIndex(next_bot_pos)
+					r =  self.simple_reward(next_bot_pos)
+					qvalue = self.value[sprime] *eps + r
+					if debug_prints:
+						print("The following transition is legal and gives q: " +str(qvalue))
+						print(next_bot_pos)
+					target_ql.append(qvalue)
+					target_ns.append(next_bot_pos)
+			if len(target_ql) > 0:
+				maxq, max_ns = target_ql[0], target_ns[0]
+				for i in range(len(target_ql)):
+					if target_ql[i] > maxq:
+						maxq = target_ql[i]
+						max_ns = target_ns[i]
+				pursuer_ql.append(maxq)
+				pursuer_ns.append(max_ns)
+		if len(pursuer_ql) > 0:
+			minq, min_ns = pursuer_ql[0], pursuer_ns[0]
+			for i in range(len(pursuer_ql)):
+				if target_ql[i] < maxq:
+					minq = pursuer_ql[i]
+					min_ns = pursuer_ns[i]
+			return min_ns
+		else:
+			print("no next state!?")
+		return None
+
+
 	def iteration(self, n, eps=0.8):
 		breaker = False
 		prev = 0
