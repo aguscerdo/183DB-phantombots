@@ -4,10 +4,10 @@ from baselines import BaseLine
 
 
 class TfSimulator:
-	def __init__(self, model, target_model=None):
+	def __init__(self, nbots, model, target_model=None):
 		self.model = model
 		self.target_model = target_model
-		self.env = Environment()
+		self.env = Environment(nbots=nbots)
 		self.reset()
 		self.baseline = BaseLine()
 		self.baseline.env = self.env

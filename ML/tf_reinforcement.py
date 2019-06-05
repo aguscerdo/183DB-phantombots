@@ -73,7 +73,7 @@ class MultiAgentCNN:
 		                        activation=None)
 		
 		concat = tf.concat([layer_in, nn], axis=-1)
-		return tf.layers.max_pooling2d(concat, [2, 2], [2, 2])
+		return tf.layers.max_pooling2d(concat, [2, 2], [1, 1])
 	
 	
 	@staticmethod
