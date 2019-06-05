@@ -138,7 +138,39 @@ class MDPSim:
 				return False
 		return True
 
+	def dist(self, pos1, pos2):
+		return np.abs(pos1[0] - pos2[0]) + np.abs(pos1[1] - pos2[1])
+
+	def target_move(self, bot_positions):
+		move1 = None
 		
+		pos = bot_positions[-1]
+		adjacent = self.adjacents(pos[0], pos[1])
+		adj = []
+		for spot in adjacent:
+			if self.legal_spot(spot):
+				adj.append(spot)
+		listOfDistances = []
+		if (len(adj) == 0):
+			print("no spots!??!")
+		for spot in adj:
+			perSpot = []
+			for i in range(len(bot_positions) - 1):
+				bot = bot_positions[i]
+				dists = self.dist(spot, bot)
+				perSpot.append(dists)
+			listOfDistances.append(perSpot)
+		
+		minDistances = [min(item) for item in listOfDistances]
+		if len(minDistances) > 0:
+			max_d = np.argmax(minDistances)
+			max_d = max_d if not isinstance(max_d, np.ndarray) else max_d[0]
+			move1 = adj[max_d]
+		else:
+			print("list empty!")
+			move1 = pos
+		
+		return move1
 
 	def target_seperated_positions(self, bot_positions):
 		all_adjacents = []
@@ -158,10 +190,13 @@ class MDPSim:
 		target = bot_positions[-1]
 		tx, ty = target
 		target_possibles = []
+		"""
 		adj = self.adjacents(tx,ty)
 		for pos in adj:
 			if self.legal_spot(pos):
 				target_possibles.append(pos)
+		"""
+		target_possibles.append(self.target_move(bot_positions))
 		target_seperates = []
 		for pos in target_possibles:
 			L = []
@@ -200,6 +235,8 @@ class MDPSim:
 	def next_state(self, bot_positions):
 		#gets next_state from value and current state
 		next_tsp = self.target_seperated_positions(bot_positions)
+		print("next tsp:")
+		print(next_tsp)
 		pursuer_ql = []
 		pursuer_ns = []
 		for fixed_target_pos in next_tsp: # loop over target moves
@@ -282,10 +319,8 @@ class MDPSim:
 					if len(pursuer_ql) > 0:
 						minq = np.min(pursuer_ql)
 					else:
-						print("no moves, but not dead state. Check?")
-						if (self.legal_state(self.linearToBots(s))):
-							print("Legal!!")
-						minq = 0
+						r = self.simple_reward(bot_positions)
+						minq = r
 					self.value[s] = minq
 			ssum = np.sum(self.value)
 			if np.abs(ssum - prev) < 1e-5*len(self.value):
@@ -338,7 +373,7 @@ def main():
 	mdp.env.set_vertice_matrix(verts)
 	mdp.iteration(100, 0.5)
 	mdp.plot("Final")
-	bps = [ [0,2], [0,0]]
+	bps = [ [0,3], [0,1]]
 	print(mdp.next_state(bps))
 	#for i in range(size):
 	#	for j in range(size):
