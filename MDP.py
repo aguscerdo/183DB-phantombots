@@ -210,10 +210,7 @@ class MDPSim:
 				if self.legal_transition(bot_positions, next_bot_pos):
 					sprime = self.botsToIndex(next_bot_pos)
 					r =  self.simple_reward(next_bot_pos)
-					qvalue = self.value[sprime] *eps + r
-					if debug_prints:
-						print("The following transition is legal and gives q: " +str(qvalue))
-						print(next_bot_pos)
+					qvalue = self.value[sprime]
 					target_ql.append(qvalue)
 					target_ns.append(next_bot_pos)
 			if len(target_ql) > 0:
@@ -227,7 +224,7 @@ class MDPSim:
 		if len(pursuer_ql) > 0:
 			minq, min_ns = pursuer_ql[0], pursuer_ns[0]
 			for i in range(len(pursuer_ql)):
-				if target_ql[i] < maxq:
+				if pursuer_ql[i] < maxq:
 					minq = pursuer_ql[i]
 					min_ns = pursuer_ns[i]
 			return min_ns
@@ -331,14 +328,18 @@ class MDPSim:
 def main():
 	size = 4
 	#size = 3
-	bots = 3
+	bots = 2
 	mdp = MDPSim(size, bots)
-	verts = [ [0,0], [0,1], [0,2], [0,3], [1,0], [2,0], [3,0], [3,1], [3,2], [3,3], [2,3], [1,3]]
+	verts = [ [0,0], [0,1], [0,2], [0,3], [1,0], [2,0], [3,0], [3,1], [3,2], [3,3], [2,3]]
 	#verts = [ [0,0], [0,1], [0,2], [1,0], [2,0], [2,1], [2,2], [1,2]]
 	#verts = [ [0,0], [0,1], [0,2], [1,0], [2,0], [2,1], [2,2], [1,2]]
+	
+
 	mdp.env.set_vertice_matrix(verts)
 	mdp.iteration(100, 0.5)
 	mdp.plot("Final")
+	bps = [ [0,2], [0,0]]
+	print(mdp.next_state(bps))
 	#for i in range(size):
 	#	for j in range(size):
 	#		print("Value matrix for i,j: " + str((i,j)))
