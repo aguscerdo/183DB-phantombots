@@ -10,6 +10,8 @@ from CV.wrapped.ThreadClasses import Thread_A, Thread_B
 
 class ThreadedSystem:
 	def __init__(self, nbots, grid_size, instructions):
+		self.instructions = instructions
+
 		self.constants = ThreadConstants()
 		
 		self.bots = self.make_bots(nbots)
@@ -21,22 +23,28 @@ class ThreadedSystem:
 	
 		if len(instructions) != nbots:
 			raise ValueError("Instructions need to be of shape: (nbots, k, 2)")
-		self.instructions = instructions
-		
+
 
 	def make_bots(self, nbots):
-		return [
-			SocketWrapper(self.constants.ip[i]) for i in range(nbots)
-		]
+		print("INIT")
+		ret = []
+
+		for i in range(nbots):
+			print("Socket", self.constants.ip[i])
+			s = SocketWrapper(self.constants.ip[i])
+			ret.append(s)
+
+		return ret
 	
 	def make_bot_threads(self, nbots, grid_size):
 		return [
-			Thread_B("bot_{}".format(i), i, grid_size, self) for i in range(nbots)
+			Thread_B("bot_{}".format(i), i, grid_size, self, self.instructions) for i in range(nbots)
 		]
 	
 	def start_threads(self):
 		self.cv_thread.start()
 		for thread in self.bot_threads:
+			print("Starting", thread.getName())
 			thread.start()
 	
 	
@@ -56,98 +64,8 @@ class ThreadedSystem:
 	def all_complete(self):
 		return 0 not in self.completed
 	
-	
-	# ---- Movement Functions ---- #
-	def goleft(self, idx, diff=40):
-		sleep_amount = self.constants.sleep
-		if diff > 40:
-			sleep_amount /= 2
-		
-		sleep_amount /= 4
-		
-		if idx >= self.constants.N_bots:
-			raise RuntimeError("Bot number {} has no ip address".format(idx))
-		
-		speed = self.constants.go_left[idx]
-		bot  = self.bots[idx]
-		
-		bot.send_motion('~', speed[0], speed[1])
-		time.sleep(sleep_amount)
-		bot.send_motion('~', 90, 90)
-	
-	
-	def goright(self, idx, diff=40):
-		sleep_amount = self.constants.sleep
-		if diff > 40:
-			sleep_amount /= 2
-		
-		sleep_amount /= 4
-		
-		if idx >= self.constants.N_bots:
-			raise RuntimeError("Bot number {} has no ip address".format(idx))
-		
-		speed = self.constants.go_right[idx]
-		bot = self.bots[idx]
-		
-		bot.send_motion('~', speed[0], speed[1])
-		time.sleep(sleep_amount)
-		bot.send_motion('~', 90, 90)
-	
-	
-	def goforward(self, idx, diff=40):
-		sleep_amount = self.constants.sleep
-		if diff > 40:
-			sleep_amount /= 2
-		
-		sleep_amount /= 4
-		
-		if idx >= self.constants.N_bots:
-			raise RuntimeError("Bot number {} has no ip address".format(idx))
-		
-		bot = self.bots[idx]
-		
-		bot.send_motion('#', 'F', 0)
-		time.sleep(sleep_amount)
-		bot.send_motion('~', 90, 90)
-		
-		
-	def gotoPos(self, x, y, botNum):
-		sleep_amount = self.constants.sleep
-		error = self.constants.error
-		tolerance = self.constants.tolerance
-		
-		actual_x, actual_y, actual_h = self.cv.get_state(botNum)
-		dist_diff = self.dist([actual_x, actual_y], [x, y])
-		
-		while dist_diff > tolerance:
-			time.sleep(sleep_amount)
-			actual_x, actual_y, actual_h = self.cv.get_state(botNum)
-			
-			desired_h = self.getAngleBetweenPoints(actual_x, actual_y, x, y)
-			difference = 180 - abs(abs(desired_h - actual_h) - 180)
-			
-			while difference > error:
-				actual_x, actual_y, actual_h = self.cv.get_state(botNum)
-				time.sleep(sleep_amount)
-				
-				delta = abs(desired_h - actual_h)
-				if delta > 180:
-					self.goleft(botNum, difference)
-				else:
-					self.goright(botNum, difference)
-				difference = 180 - abs(delta - 180)
-				
-				
-			dist_diff = self.dist([actual_x, actual_y], [x, y])
-			self.goforward(botNum, dist_diff)
-			
-			actual_x, actual_y, actual_h = self.cv.get_state(botNum)
-			
-			print(actual_x, actual_y, '--', x, y)
-			dist_diff = self.dist([actual_x, actual_y], [x, y])
-			
-		print("Location Reached, YAY!")
-		return
+	def get_bot(self, idx):
+		return self.bots[idx]
 	
 	@staticmethod
 	def angle_trunc(a):
@@ -165,4 +83,100 @@ class ThreadedSystem:
 		sx, sy = start
 		ex, ey = end
 		return ((sx - ex) ** 2 + (ey - sy) ** 2) ** 0.5
+	
+	"""
+	# ---- Movement Functions ---- #
+	def goleft(self, idx, diff=40):
+		sleep_amount = self.constants.sleep
+		if diff > 40:
+			sleep_amount /= 2
 		
+		if idx >= self.constants.N_bots:
+			raise RuntimeError("Bot number {} has no ip address".format(idx))
+		
+		speed = self.constants.go_left[idx]
+		bot = self.bots[idx]
+		
+		bot.send_motion('~', speed[0], speed[1])
+		time.sleep(sleep_amount)
+		bot.send_motion('~', 90, 90)
+	
+	def goright(self, idx, diff=40):
+		sleep_amount = self.constants.sleep
+		if diff > 40:
+			sleep_amount /= 2
+		
+		if idx >= self.constants.N_bots:
+			raise RuntimeError("Bot number {} has no ip address".format(idx))
+		
+		speed = self.constants.go_right[idx]
+		bot = self.bots[idx]
+		
+		bot.send_motion('~', speed[0], speed[1])
+		time.sleep(sleep_amount)
+		bot.send_motion('~', 90, 90)
+	
+	def goforward(self, idx, diff=40):
+		sleep_amount = self.constants.sleep
+		if diff > 40:
+			sleep_amount /= 2
+		
+		if idx >= self.constants.N_bots:
+			raise RuntimeError("Bot number {} has no ip address".format(idx))
+		
+		bot = self.bots[idx]
+		
+		bot.send_motion('#', 'F', 0)
+		time.sleep(sleep_amount)
+		bot.send_motion('~', 90, 90)
+	
+	def gotoPos(self, x, y, botNum):
+		sleep_amount = self.constants.sleep
+		error = self.constants.error
+		tolerance = self.constants.tolerance
+		
+		actual_x, actual_y, actual_h = self.cv.get_state(botNum)
+		print(actual_x, x)
+		dist_diff = self.dist([actual_x, actual_y], [x, y])
+		
+		while dist_diff > tolerance:
+			time.sleep(sleep_amount)
+			actual_x, actual_y, actual_h = self.cv.get_state(botNum)
+			
+			desired_h = self.getAngleBetweenPoints(actual_x, actual_y, x, y)
+			difference = 180 - abs(abs(desired_h - actual_h) - 180)
+			
+			while difference > error:
+				print("HEADING ADJ", botNum, actual_h, desired_h)
+				actual_x, actual_y, actual_h = self.cv.get_state(botNum)
+				time.sleep(sleep_amount)
+				
+				if (actual_h < desired_h):
+					print("H ADJ", actual_h, desired_h)
+					if desired_h - actual_h > 180:
+						print("go left, bot:" + str(botNum))
+						self.goleft(botNum, difference)
+					else:
+						print("go right, bot:" + str(botNum))
+						self.goright(botNum, difference)
+				else:
+					if actual_h - desired_h > 180:
+						print("go right, bot:" + str(botNum))
+						self.goright(botNum, difference)
+					else:
+						print("go left, bot:" + str(botNum))
+						self.goleft(botNum, difference)
+				
+				difference = 180 - abs(abs(desired_h - actual_h) - 180)
+			
+			dist_diff = self.dist([actual_x, actual_y], [x, y])
+			self.goforward(botNum, dist_diff)
+			
+			actual_x, actual_y, actual_h = self.cv.get_state(botNum)
+			
+			print(actual_x, actual_y, '--', x, y)
+			dist_diff = self.dist([actual_x, actual_y], [x, y])
+		
+		print("Location Reached, YAY!")
+		return
+	"""

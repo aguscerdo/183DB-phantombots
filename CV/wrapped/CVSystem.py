@@ -16,9 +16,9 @@ class CVSystem:
 		self.grid_size = grid_size
 		self.grid = np.zeros((grid_size, grid_size, 2))
 		
-		self.states = [[0,0,0] for _ in nbots]
-		
-		self.corners = [[0,0] for _ in range(4)]
+		self.states = [[0,0,0] for i in range(nbots)]
+
+		self.corners = [[0,0] for i in range(4)]
 		self.corner_ids = self.const.corner_ids
 		self.corner_counter = 0
 
@@ -27,8 +27,7 @@ class CVSystem:
 		
 	def Follow(self):
 		cap = cv2.VideoCapture(0)
-		print(cap.isOpened())
-		
+
 		time.sleep(1)
 		_, img = cap.read()
 		gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
@@ -46,7 +45,7 @@ class CVSystem:
 			aruco_dict = aruco.Dictionary_get(aruco.DICT_4X4_250)
 			parameters = aruco.DetectorParameters_create()
 			corners, ids, rejectedImgPoints = aruco.detectMarkers(gray, aruco_dict, parameters=parameters)
-			
+
 			for x in range(0, len(ids)):
 				Tempx = corners[x][0][0][0] + corners[x][0][1][0] + corners[x][0][2][0] + corners[x][0][3][0]
 				Tempx /= 4
@@ -168,7 +167,10 @@ class CVSystem:
 						                                         int(corners[x][0][1][1]))
 												
 						h0 = math.degrees(heading)
-						self.states[index] = [x0, y0, h0]
+						self.states[index][0] = x0
+						self.states[index][1] = y0
+						self.states[index][2] = h0
+
 						
 						cv2.putText(img, str(h0), (100, 200), font, 0.5, (0, 255, 0), 2, cv2.LINE_AA)
 						
@@ -194,7 +196,7 @@ class CVSystem:
 
 	
 	def get_state(self, idx):
-		return self.states[idx][0], self.states[idx][1], self.states[idx][2]
+		return self.states[idx]
 	
 	def get_grid(self, i, j):
-		return self.grid[i][j][0], self.grid[i][j][0]
+		return self.grid[i][j][0], self.grid[i][j][1]
