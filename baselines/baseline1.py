@@ -29,7 +29,12 @@ class BaseLine:
         
         minDistances = [min(item) for item in listOfDistances]
         max_d = np.argmax(minDistances)
-        max_d = max_d if not isinstance(max_d, np.ndarray) else max_d[0]
+        
+        try:
+            max_d[0]
+        except IndexError:
+            pass
+
         move1 = adj[max_d]
         if target.double_move():
             pos = move1
@@ -48,7 +53,11 @@ class BaseLine:
                 move2 = prev_pos # move back 
             else:
                 max_d = np.argmax(minDistances)
-                max_d = max_d if not isinstance(max_d, np.ndarray) else max_d[0]
+                try:
+                    max_d = max_d[0]
+                except IndexError:
+                    pass
+                
                 move2 = adj[max_d]
             
         return move1, move2
@@ -65,10 +74,12 @@ class BaseLine:
             else:
                 d = [(self.env.dist(spot, self.env.bots[-1].get_position())) for spot in adj]
                 min_d = np.argmin(d)
-                min_d = min_d if isinstance(min_d, np.int64) else min_d[0]
-
+                
+                try:
+                    min_d = min_d[0]
+                except IndexError:
+                    pass
                 moves.append(adj[min_d])
-
         return moves
 
 

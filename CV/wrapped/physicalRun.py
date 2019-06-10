@@ -1,5 +1,5 @@
 from environment import Environment, PhantomBot
-from CV.cv222.RunProject import run_system
+from CV import ThreadedSystem
 from baselines import BaseLine
 import numpy as np
 
@@ -24,10 +24,13 @@ def execute_simulation(bot_pos, target_pos, map_name="4x4.csv"):
 
 
 def physical_execution(n_bots, grid_size, instructions):
-	print("Initiating Physical system")
-	run_system(n_bots, grid_size, instructions)
-	print("Completion")
+	print("Start physical exec")
+	system = ThreadedSystem(n_bots, grid_size, instructions)
 	
+	print("Starting thrads")
+	system.start_threads()
+	system.join_threads()
+
 
 if __name__ == '__main__':
 	print("Start")

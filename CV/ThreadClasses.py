@@ -20,8 +20,7 @@ class Thread_B(threading.Thread):
 	
 	
 	def run(self):
-		time.sleep(1)   # TODO check this number
-		
+		time.sleep(1)
 		while self.loop or self.step < self.n_steps:
 			i, j = self.arr[self.botNum][self.step][0], self.arr[self.botNum][self.step][1]
 			self.parent.set_complete(self.botNum, 0)
@@ -93,7 +92,6 @@ class Thread_B(threading.Thread):
 		tolerance = self.parent.constants.tolerance
 		
 		actual_x, actual_y, actual_h = self.parent.cv.get_state(botNum)
-		print(actual_x, x)
 		dist_diff = self.dist([actual_x, actual_y], [x, y])
 		
 		while dist_diff > tolerance:
@@ -104,24 +102,22 @@ class Thread_B(threading.Thread):
 			difference = 180 - abs(abs(desired_h - actual_h) - 180)
 			
 			while difference > error:
-				print("HEADING ADJ", botNum, actual_h, desired_h)
 				actual_x, actual_y, actual_h = self.parent.cv.get_state(botNum)
 				time.sleep(sleep_amount)
 				
 				if actual_h < desired_h:
-					print("H ADJ", actual_h, desired_h)
 					if desired_h - actual_h > 180:
-						print("go left, bot:" + str(botNum))
+						print("go left, bot:", botNum)
 						self.goleft(botNum, difference)
 					else:
-						print("go right, bot:" + str(botNum))
+						print("go right, bot:", botNum)
 						self.goright(botNum, difference)
 				else:
 					if actual_h - desired_h > 180:
-						print("go right, bot:" + str(botNum))
+						print("go right, bot:", botNum)
 						self.goright(botNum, difference)
 					else:
-						print("go left, bot:" + str(botNum))
+						print("go left, bot:", botNum)
 						self.goleft(botNum, difference)
 				
 				difference = 180 - abs(abs(desired_h - actual_h) - 180)
@@ -131,9 +127,7 @@ class Thread_B(threading.Thread):
 			
 			actual_x, actual_y, actual_h = self.parent.cv.get_state(botNum)
 			
-			print(actual_x, actual_y, '--', x, y)
 			dist_diff = self.dist([actual_x, actual_y], [x, y])
-		print("Location Reached, YAY!")
 		return
 	
 	

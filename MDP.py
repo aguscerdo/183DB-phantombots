@@ -2,6 +2,9 @@ import numpy as np
 from collections import defaultdict
 import matplotlib.pyplot as plt
 import itertools
+from environment import Environment
+import time
+from baselines import BaseLine
 
 class Bot:
 	def __init__(self):
@@ -360,21 +363,57 @@ class MDPSim:
 		#plt.title("{}".format(title))
 		# print("Target: {}, {}".format(self.env.t.x, self.env.t.y))
 
+def value_simulation(mdp, env):
+	pos = [[0,0], [0,1], [2, 2]]
+	history = []
+	history.append(pos)
+	
+	bs1 = BaseLine(env)
+	
+	while pos[0] != pos[-1] and pos[1] != pos[-1]:
+		tpos = bs1.set_run_return(pos)
+		pos = mdp.next_state(pos)
+		
+		pos = [[a[0], a[1]] for a in pos]
+		pos = pos[:-1] + [tpos[-1]]
+		history.append(pos)
+		
+	
+	a = np.array(history).swapaxes(0, 1)
+	
+	return a.tolist()
+
+
 def main():
 	size = 4
 	#size = 3
-	bots = 2
+	bots = 3
 	mdp = MDPSim(size, bots)
-	verts = [ [0,0], [0,1], [0,2], [0,3], [1,0], [2,0], [3,0], [3,1], [3,2], [3,3], [2,3]]
-	#verts = [ [0,0], [0,1], [0,2], [1,0], [2,0], [2,1], [2,2], [1,2]]
-	#verts = [ [0,0], [0,1], [0,2], [1,0], [2,0], [2,1], [2,2], [1,2]]
+	verts = [ [0,0], [0,1], [0,2], [0,3],
+	          [1,0], [1,1], [1,2], [1,3],
+	          [2,0], [2,1], [2,2], [2,3],
+	          [3,0], [3,1], [3,2], [3,3]]
 	
-
+	now = time.time()
 	mdp.env.set_vertice_matrix(verts)
+	env = Environment(3, map_path="maps/4x4.csv")
+
+	
 	mdp.iteration(100, 0.5)
 	mdp.plot("Final")
 	bps = [ [0,3], [0,1]]
-	print(mdp.next_state(bps))
+	# print(mdp.next_state(bps))
+	
+	delta = time.time()-now
+	print("----- TIME ------", delta)
+	
+	history = value_simulation(mdp, env)
+	
+	
+	env.history = history
+	
+	env.animate()
+	
 	#for i in range(size):
 	#	for j in range(size):
 	#		print("Value matrix for i,j: " + str((i,j)))

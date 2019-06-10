@@ -1,5 +1,5 @@
 from environment import Environment, PhantomBot
-from CV import ThreadedSystem
+from CV import run_system, g_start
 from baselines import BaseLine
 import numpy as np
 
@@ -24,17 +24,14 @@ def execute_simulation(bot_pos, target_pos, map_name="4x4.csv"):
 
 
 def physical_execution(n_bots, grid_size, instructions):
-	print("Start physical exec")
-	system = ThreadedSystem(n_bots, grid_size, instructions)
+	print("Initiating Physical system")
+	g_start(nbots, grid_size)
+	run_system(n_bots, grid_size, instructions)
+	print("Completion")
 	
-	print("Starting thrads")
-	system.start_threads()
-	system.join_threads()
-
 
 if __name__ == '__main__':
-	print("Start")
-	nbots = 4
+	nbots = 3
 	pursuers = [
 		[0, 0],
 		[0, 1],
@@ -44,32 +41,32 @@ if __name__ == '__main__':
 	
 	map_f = "4x4.csv"
 	
-	# n_bots, grid_size, instructions = execute_simulation(pursuers[:nbots-1], target, map_f)
+	n_bots, grid_size, instructions = execute_simulation(pursuers[:nbots-1], target, map_f)
 	
-	instructions = [[[0, 0],
-	                 [1, 0],
-	                 [2, 0],
-	                 [3, 0],
-	                 [3, 1]],
-	
-	                [[0, 1],
-	                 [1, 1],
-	                 [2, 1],
-	                 [2, 2],
-	                 [2, 1]],
-	
-	                [[0, 2],
-	                 [1, 2],
-	                 [1, 3],
-	                 [2, 3],
-	                 [3, 3]],
-	
-	                [[2, 2],
-	                 [2, 3],
-	                 [3, 3],
-	                 [3, 2],
-	                 [3, 3]]]
-	n_bots = 2
-	grid_size = 4
+	# instructions = [[[0, 0],
+	#                  [1, 0],
+	#                  [2, 0],
+	#                  [3, 0],
+	#                  [3, 1]],
+	#
+	#                 [[0, 1],
+	#                  [1, 1],
+	#                  [2, 1],
+	#                  [2, 2],
+	#                  [2, 1]],
+	#
+	#                 [[0, 2],
+	#                  [1, 2],
+	#                  [1, 3],
+	#                  [2, 3],
+	#                  [3, 3]],
+	#
+	#                 [[2, 2],
+	#                  [2, 3],
+	#                  [3, 3],
+	#                  [3, 2],
+	#                  [3, 3]]]
+	# n_bots = 2
+	# grid_size = 4
 	
 	physical_execution(n_bots, grid_size, instructions[:n_bots])
