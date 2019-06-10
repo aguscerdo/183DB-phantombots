@@ -670,7 +670,51 @@ class Environment:
 				return True # if we moved, then great!
 		print("err :( curr > randmax")
 		return False # we did not move
-		
+	
+
+	def baseline1(self):
+		"""
+		Test, each bot does a random thing that is legal
+		"""
+		base = baseline.BaseLine2()
+		while not self.win_condition():
+			pursuer_moves, pacman_move, pacman_second_move = base.baseline_step()
+			if not self.play_round(pursuer_moves, pacman_move, pacman_second_move):
+				print (":(")
+				return False # we did not move
+
+		print (":)")
+		return True # we moved!
+
+
+	def baseline2(self):
+		"""
+		Test, each bot does a random thing that is legal
+		"""
+		base = baseline.BaseLine2()
+		while not self.win_condition():
+			pursuer_moves, pacman_move, pacman_second_move = base.baseline_step()
+			if not self.play_round(pursuer_moves, pacman_move, pacman_second_move):
+				print (":(")
+				return False # we did not move
+
+		print (":)")
+		return True # we moved!
+
+	def baseline3(self):
+		"""
+		Test, each bot does a random thing that is legal
+		"""
+		base = baseline.BaseLine3()
+		while not self.win_condition():
+			pursuer_moves, pacman_move, pacman_second_move = base.baseline_step()
+			if not self.play_round(pursuer_moves, pacman_move, pacman_second_move):
+				print (":(")
+				return False # we did not move
+
+		print (":)")
+		return True # we moved!
+	
 	def rand_initialise(self, preset=False):
 		if (preset):
 			self.move(0, [0,0])
@@ -843,7 +887,8 @@ class Environment:
 			self.move(i, self.starting_positions[i])
 		self.reset_history()
 
-
+		
+import baseline1 as baseline
 # env = Environment()
 # env.rand_initialise_within_radius(3, 4, [0,0], 1)
 # env.plot_grid()
