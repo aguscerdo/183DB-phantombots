@@ -2,75 +2,12 @@ import matplotlib
 import numpy as np
 import environment
 
-
-# class BS1:
-#     def __init__(self, env):
-#         self.env = env
-#
-#     def evaderAlg(self, pos):
-#         while (not self.env.win_condition()): #while game is not over
-#             adj = self.env.adjacent(pos)  #find all adjacent spots
-#             for spots in adj:       #determine actual legal spots from adjacent spots
-#                 if self.env.legal_move_pos(pos, spots) is 0:
-#                     adj.remove(spots)
-#             listOfDistances = []    #list of list of distances
-#             for spot in adj:    #find distances from each bot to spot
-#                 distances = []
-#                 for bot in range(len(self.env.bots)-1):
-#                     distances.append(self.env.dist(spot,self.env.bots[bot].get_position()))
-#                 listOfDistances.append((distances))
-#             minDistances = []
-#             for item in listOfDistances:
-#                 minDistances.append(min(item))
-#             maxMin = 0
-#             for i in range(len(minDistances)):
-#                 if minDistances[i] < minDistances[maxMin]:
-#                     maxMin = i
-#             return adj[maxMin]
-#
-#
-#     def pursuerAlg(self, pos):   #pass in list of initial position of pursuer bots
-#         pursuerMoves = []
-#         while (not self.env.win_condition()): #while game is not over
-#             for i in range(0, len(self.env.bots)-1):    #run for each pursuer
-#                 adj = self.env.adjacent(pos[i])
-#                 for spots in adj:
-#                     if self.env.legal_move_pos(pos[i], spots) == 0:
-#                         adj.remove(spots)   #remove spot if not valid
-#                 distances = []
-#                 for spot in adj:
-#                     distances.append() #find distance of spot to pacman
-#                 mmin = 0
-#                 for j in range(len(distances)):
-#                     if distances[j] < distances[mmin]:   #determine min distance
-#                         mmin = j
-#                 pursuerMoves.append(adj[mmin])
-#
-#             return pursuerMoves
-#         return []
-
-
-# def baseline_motion(self):
-#     pursuer_pos = []
-#     evader = self.bots[-1]
-#     evader_pos = evader.get_position()
-#     evader_second_move = None
-#     # for i in range(0, len(self.bots)-1):
-#     #     pursuer_pos.append(self.bots[i].get_position())
-#     pursuer_moves = self.bs1.pursuerAlg(pursuer_pos)
-#     evader_move = self.bs1.evaderAlg(evader_pos)
-#     if evader.double_move():
-#         evader_second_move = self.bs1.evaderAlg((evader.get_position()))
-#     if self.play_round(pursuer_moves, evader_move, evader_second_move):
-#         return True    #we moved!
-#     print ("err!!")
-#     return False
-
-
-
 class BaseLine1:
-    def __init__(self):
-        self.env = environment.Environment()
+    def __init__(self, env=None, nbots=3):
+        if env is None:
+            self.env = environment.Environment(nbots=nbots)
+        else:
+            self.env = env
     
     
     def target_move(self):
@@ -113,6 +50,7 @@ class BaseLine1:
                 max_d = np.argmax(minDistances)
                 max_d = max_d if not isinstance(max_d, np.ndarray) else max_d[0]
                 move2 = adj[max_d]
+            
         return move1, move2
     
     
@@ -139,24 +77,35 @@ class BaseLine1:
         target_move1, target_move2 = self.target_move()
         
         ok = self.env.play_round(pursuer_moves, target_move1, target_move2)
-        # if not ok:
-        #     raise ValueError("Failed to play round: {} -- {} -- {}".format(pursuer_moves, target_move1, target_move2))
+        if not ok:
+            raise ValueError("Failed to play round: {} -- {} -- {}".format(pursuer_moves, target_move1, target_move2))
         return pursuer_moves, target_move1, target_move2
     
     
     def baseline_moves(self):
         pursuer_moves = self.pursuer_move()
         target_move1, target_move2 = self.target_move()
+        
         return pursuer_moves, target_move1, target_move2
-
-
-
-
-class BaseLine2:
-    def __init__(self):
-        self.env = environment.Environment()
-
-    def target_move(self):
+    
+    def run_baseline(self,rand=False):
+        i = 0
+        if rand:
+            self.env.rand_initialise()
+        while not self.env.win_condition():
+            self.baseline_step()
+            if i % 25 == 0:
+                self.env.plot_grid()
+            i += 1
+    
+    def set_run_return(self, bot_pos):
+        for i, b in enumerate(bot_pos):
+            self.env.bots[i].move((b[0], b[1]))
+        
+        pm, tm1, tm2 = self.baseline_moves()
+        
+        return pm + [tm1]
+    
 
         move1, move2 = None, None
 

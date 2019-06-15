@@ -5,7 +5,6 @@ import matplotlib.pyplot as plt
 import os
 from time import time
 
-
 def main():
 	game = Game()
 	env_size = 4

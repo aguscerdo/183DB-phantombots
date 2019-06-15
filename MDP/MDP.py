@@ -4,7 +4,7 @@ import matplotlib.pyplot as plt
 import itertools
 from environment import Environment
 import time
-from baselines import BaseLine
+from baselines import BaseLine1 as BaseLine
 
 class Bot:
 	def __init__(self):
@@ -284,6 +284,8 @@ class MDPSim:
 			print("Iteration", i)
 			self.value_prev = self.value.copy()
 			for s in range(len(self.value)): #loop over all states
+				if not s % 1000:
+					print("\t- Axis", s)
 				bot_positions = self.linearToBots(s)
 				# if legal state:
 				if self.legal_state(bot_positions):
@@ -385,18 +387,18 @@ def value_simulation(mdp, env):
 
 
 def main():
-	size = 4
+	size = 5
 	#size = 3
-	bots = 3
+	bots = 4
 	mdp = MDPSim(size, bots)
-	verts = [ [0,0], [0,1], [0,2], [0,3],
-	          [1,0], [1,1], [1,2], [1,3],
-	          [2,0], [2,1], [2,2], [2,3],
-	          [3,0], [3,1], [3,2], [3,3]]
+	
+	verts = [[i, j] for i in range(size) for j in range(size)]
+	
+	print(verts)
 	
 	now = time.time()
 	mdp.env.set_vertice_matrix(verts)
-	env = Environment(3, map_path="maps/4x4.csv")
+	env = Environment(3, map_path="maps/5x5.csv")
 
 	
 	mdp.iteration(100, 0.5)
@@ -407,12 +409,12 @@ def main():
 	delta = time.time()-now
 	print("----- TIME ------", delta)
 	
-	history = value_simulation(mdp, env)
-	
-	
-	env.history = history
-	
-	env.animate()
+	# history = value_simulation(mdp, env)
+	#
+	#
+	# env.history = history
+	#
+	# env.animate()
 	
 	#for i in range(size):
 	#	for j in range(size):

@@ -1,5 +1,6 @@
 from baselines import baseline1
 import numpy as np
+
 class Game:
 	def __init__(self):
 		self.baseline = baseline1.BaseLine()
