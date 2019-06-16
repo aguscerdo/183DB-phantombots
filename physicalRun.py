@@ -1,6 +1,6 @@
 from environment import Environment, PhantomBot
 from CV import run_system, g_start
-from baselines import BaseLine1, BaseLineRunner
+from baselines import *
 import numpy as np
 
 

@@ -32,3 +32,6 @@ On the `ML` directory we find the machine learning functions and classes.
 
 For an example of usage, refer to `learn_simulate.py`.
 
+### Baselines
+On the `baseline` directory 3 different baselines are available.
+- `runner.py` contains `BaselineRunner`, a class used to run simulations on any of the baselines available.
