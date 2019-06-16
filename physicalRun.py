@@ -1,6 +1,6 @@
 from environment import Environment, PhantomBot
 from CV import run_system, g_start
-from baselines import BaseLine
+from baselines import BaseLine1, BaseLineRunner
 import numpy as np
 
 
@@ -12,8 +12,9 @@ def execute_simulation(bot_pos, target_pos, map_name="4x4.csv"):
 	
 	env = Environment(nbots=len(bot_list), bots=bot_list, map_path="maps/" + map_name)
 	
-	baseline = BaseLine(env)
-	baseline.run_baseline()
+	baseline = BaseLine1(env)
+	runner = BaseLineRunner(baseline)
+	runner.run_baseline()
 	
 	history = np.array(env.history.copy())
 	print(history)
@@ -42,31 +43,5 @@ if __name__ == '__main__':
 	map_f = "4x4.csv"
 	
 	n_bots, grid_size, instructions = execute_simulation(pursuers[:nbots-1], target, map_f)
-	
-	# instructions = [[[0, 0],
-	#                  [1, 0],
-	#                  [2, 0],
-	#                  [3, 0],
-	#                  [3, 1]],
-	#
-	#                 [[0, 1],
-	#                  [1, 1],
-	#                  [2, 1],
-	#                  [2, 2],
-	#                  [2, 1]],
-	#
-	#                 [[0, 2],
-	#                  [1, 2],
-	#                  [1, 3],
-	#                  [2, 3],
-	#                  [3, 3]],
-	#
-	#                 [[2, 2],
-	#                  [2, 3],
-	#                  [3, 3],
-	#                  [3, 2],
-	#                  [3, 3]]]
-	# n_bots = 2
-	# grid_size = 4
 	
 	physical_execution(n_bots, grid_size, instructions[:n_bots])
